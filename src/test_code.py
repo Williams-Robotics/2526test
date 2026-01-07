@@ -34,13 +34,10 @@ front_right = Motor(FRONT_RIGHT_PORT, GearSetting.RATIO_18_1, FRONT_RIGHT_REVERS
 back_left = Motor(BACK_LEFT_PORT, GearSetting.RATIO_18_1, BACK_LEFT_REVERSE)
 back_right = Motor(BACK_RIGHT_PORT, GearSetting.RATIO_18_1, BACK_RIGHT_REVERSE)
 
-# Global toggle states
-intake_forward = False
-intake_reverse = False
 
 # Assume motors are already initialized somewhere:
-intake_left = Ports.PORT11
-intake_right = Ports.PORT11
+intake_left  = Motor(Ports.PORT1, GearSetting.RATIO_18_1, False)
+intake_right = Motor(Ports.PORT2, GearSetting.RATIO_18_1, True)
 
 
 #right and left relative to viewing from the front
@@ -49,17 +46,17 @@ def intake_forward_toggle():
 
     if intake_forward:
         # If already running forward, stop both motors concurrently
-        intake_left.stop(HOLD, wait=False)
-        intake_right.stop(HOLD, wait=False)
+        intake_left.stop(HOLD)
+        intake_right.stop(HOLD)
     else:
         # If reverse is on, turn it off first
         if intake_reverse:
             intake_reverse = False
-            intake_left.stop(HOLD, wait=False)
-            intake_right.stop(HOLD, wait=False)
+            intake_left.stop(HOLD)
+            intake_right.stop(HOLD)
 
         # Spin both motors in forward intake direction concurrently
-        intake_left.spin(REVERSE, 100, PERCENT, wait=False)
+        intake_left.spin(FORWARD, 100, PERCENT, wait=False)
         intake_right.spin(FORWARD, 100, PERCENT, wait=False)
 
     # Toggle the forward state
@@ -70,28 +67,37 @@ def intake_reverse_toggle():
 
     if intake_reverse:
         # If already running reverse, stop both motors concurrently
-        intake_left.stop(HOLD, wait=False)
-        intake_right.stop(HOLD, wait=False)
+        intake_left.stop(HOLD)
+        intake_right.stop(HOLD)
     else:
         # If forward is on, turn it off first
         if intake_forward:
             intake_forward = False
-            intake_left.stop(HOLD, wait=False)
-            intake_right.stop(HOLD, wait=False)
+            intake_left.stop(HOLD)
+            intake_right.stop(HOLD)
 
         # Spin both motors in reverse intake direction concurrently
-        intake_left.spin(FORWARD, 100, PERCENT, wait=False)
+        intake_left.spin(REVERSE, 100, PERCENT, wait=False)
         intake_right.spin(REVERSE, 100, PERCENT, wait=False)
 
-spinny_thing = Ports.PORT11
+spinny_thing = Motor(Ports.PORT1, GearSetting.RATIO_18_1, False)
 
-def spin_toggle():
+def spin_toggle_fn():
     global spin_toggle
     if spin_toggle:
         spinny_thing.stop()
     else: 
-        spinny_thing.spin(REVERSE, 100, PERCENT)
+        spinny_thing.spin(FORWARD, 100, PERCENT)
     spin_toggle = not spin_toggle
+
+spin_toggle = False
+controller.buttonA.pressed(spin_toggle_fn)
+
+intake_forward = False
+controller.buttonL1.pressed(intake_forward_toggle)
+
+intake_reverse = False
+controller.buttonL2.pressed(intake_reverse_toggle)
 
 # ==================== DRIVETRAIN FUNCTIONS ====================
 def x_drive_control():
