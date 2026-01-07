@@ -16,10 +16,10 @@ controller = Controller(PRIMARY)
 
 # ==================== MOTOR CONFIGURATION ====================
 # Configure your motor ports here
-FRONT_LEFT_PORT = Ports.PORT10
-FRONT_RIGHT_PORT = Ports.PORT20
-BACK_LEFT_PORT = Ports.PORT1
-BACK_RIGHT_PORT = Ports.PORT11
+FRONT_LEFT_PORT = Ports.PORT8
+FRONT_RIGHT_PORT = Ports.PORT3
+BACK_LEFT_PORT = Ports.PORT9
+BACK_RIGHT_PORT = Ports.PORT4
 
 # Configure motor reverse settings (True = reversed, False = normal)
 FRONT_LEFT_REVERSE = False
@@ -36,8 +36,8 @@ back_right = Motor(BACK_RIGHT_PORT, GearSetting.RATIO_18_1, BACK_RIGHT_REVERSE)
 
 
 # Assume motors are already initialized somewhere:
-intake_left  = Motor(Ports.PORT1, GearSetting.RATIO_18_1, False)
-intake_right = Motor(Ports.PORT2, GearSetting.RATIO_18_1, True)
+intake_left  = Motor(Ports.PORT10, GearSetting.RATIO_18_1, False)
+intake_right = Motor(Ports.PORT1, GearSetting.RATIO_18_1, True)
 
 
 #right and left relative to viewing from the front
@@ -80,7 +80,7 @@ def intake_reverse_toggle():
         intake_left.spin(REVERSE, 100, PERCENT, wait=False)
         intake_right.spin(REVERSE, 100, PERCENT, wait=False)
 
-spinny_thing = Motor(Ports.PORT1, GearSetting.RATIO_18_1, False)
+spinny_thing = Motor(Ports.PORT2, GearSetting.RATIO_18_1, False)
 
 def spin_toggle_fn():
     global spin_toggle
