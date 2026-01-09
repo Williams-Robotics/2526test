@@ -2,4 +2,5 @@
 2. GPS Heading
 3. GPS Goto
 4. Move Distance(With GPS Checking)
+5. Add inertial sensor
 4. AI Vision+ Distance Sensor-> GPS GOTO/MOVE Distance
