@@ -68,7 +68,7 @@ def ai_funcs():
         print("yes")
         objs_names=""
         for x in objs:
-            if x.id==0 or GameElementsPushBack.BLUE_BLOCK:
+            if x.id==0:
                 objs_names+=("Blue: "+str(x.score)+", ")
             elif x.id==1:
                 objs_names+=("Red: "+str(x.score)+", ")

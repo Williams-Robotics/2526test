@@ -135,6 +135,8 @@ goal_head=999
 last_head=999
 getH=False
 gotH=False
+prev_head_error=0
+total_head_error=0
 def x_drive_control():
     """
     Control the X-drive using controller joysticks.
@@ -174,10 +176,14 @@ def heading_control(turn):
     global goal_head
     global getH
     global gotH
+    global prev_head_error
+    global total_head_error
     #When Turning
     if turn!=0:
         getH=False
         gotH=False
+        prev_head_error=0
+        total_head_error=0
         return turn
     
     #When Done turning, get heading
@@ -190,7 +196,10 @@ def heading_control(turn):
     elif turn==0 and gotH:
         chead=int.heading()
         chead-=180
-        turn=(goal_head-chead)/4 #PID here?
+        turn=(goal_head-chead)/4 
+
+        #turn,prev_head_error,total_head_error=PID(goal_head,chead,.25,1,1,prev_head_error,total_head_error)  #THIS IS PID! please tune the values, the .25 is just from what i used before. 
+        
         print("chead: "+str(chead)+"-goal: "+str(goal_head))
         return turn
         # if last_head==999:
@@ -214,6 +223,20 @@ def stop_drive():
 
 def PID(desired_state,current_state,Kp,Ki,Kd,prev_error,total_error):
     #Blank PID Function, so we can use it everywhere
+    '''
+    ### PID Function
+   
+    desired_state-- What we want
+    
+    current_state-- where we are
+    
+    Kp,Ki,Kd: Tuning variables
+    
+    Prev_error: previous error
+    
+    total_error: total error
+    '''
+    
     '''## Desired position (adjust number based on what we need the robot to do)
     desired_state = 0
 
