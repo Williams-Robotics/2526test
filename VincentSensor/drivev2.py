@@ -18,7 +18,7 @@ import math
 #endregion
 #region ==================== MOTOR CONFIGURATION ====================
 # Configure your motor ports here
-FRONT_LEFT_PORT = Ports.PORT19
+FRONT_LEFT_PORT = Ports.PORT20
 FRONT_RIGHT_PORT = Ports.PORT11
 BACK_LEFT_PORT = Ports.PORT10
 BACK_RIGHT_PORT = Ports.PORT1
@@ -35,6 +35,7 @@ BACK_RIGHT_REVERSE = True
 AI_PORT=Ports.PORT13
 D_PORT=Ports.PORT15
 GPS_PORT=Ports.PORT9
+INT_PORT=Ports.PORT21
 #endregion
 #region ==================== MOTOR INITIALIZATION ====================
 # Initialize motors with configured ports and reverse settings
@@ -61,11 +62,14 @@ ai__BRED = Colordesc(2, 231, 42, 92, 10, 0.2)
 distance = Distance(D_PORT)
 gps=Gps(GPS_PORT,0,0)# set to be the offset from the center of robot
 ai = AiVision(AI_PORT, ai__BBLUE, ai__BRED, AiVision.ALL_AIOBJS)
+int=Inertial(INT_PORT)
+timer = Timer()
+
 #endregion
 #region ==================== INTAKE MOTOR FUNCTIONS ====================
 # Assume motors are already initialized somewhere:
-intake_left  = Motor(Ports.PORT10, GearSetting.RATIO_18_1, False)
-intake_right = Motor(Ports.PORT1, GearSetting.RATIO_18_1, True)
+intake_left  = Motor(Ports.PORT17, GearSetting.RATIO_18_1, False)
+intake_right = Motor(Ports.PORT16, GearSetting.RATIO_18_1, True)
 
 #right and left relative to viewing from the front
 def intake_forward_toggle():
@@ -107,7 +111,7 @@ def intake_reverse_toggle():
         intake_left.spin(REVERSE, 100, PERCENT)
         intake_right.spin(REVERSE, 100, PERCENT)
 
-spinny_thing = Motor(Ports.PORT2, GearSetting.RATIO_18_1, False)
+spinny_thing = Motor(Ports.PORT8, GearSetting.RATIO_18_1, False)
 
 def spin_toggle_fn():
     global spin_toggle
@@ -127,6 +131,10 @@ intake_reverse = False
 controller.buttonL2.pressed(intake_reverse_toggle)
 #endregion
 #region ==================== DRIVETRAIN FUNCTIONS ====================
+goal_head=999
+last_head=999
+getH=False
+gotH=False
 def x_drive_control():
     """
     Control the X-drive using controller joysticks.
@@ -139,7 +147,9 @@ def x_drive_control():
     turn = controller.axis1.position()     # Right stick X-axis
     run_drive_motors(forward,strafe,turn)
     
-def run_drive_motors(forward,strafe,turn):    
+def run_drive_motors(forward,strafe,turn):
+    turn=heading_control(turn)
+       
     # Calculate motor speeds for X-drive kinematics
     # X-drive formula accounts for diagonal motor placement
     front_left_speed = forward + strafe + turn
@@ -152,7 +162,47 @@ def run_drive_motors(forward,strafe,turn):
     front_right.spin(FORWARD, front_right_speed, PERCENT)
     back_left.spin(FORWARD, back_left_speed, PERCENT)
     back_right.spin(FORWARD, back_right_speed, PERCENT)
-
+#Gets the heading of the robot after a slight delay, so it gets the heading when it is stopped
+def get_heading(turn):
+    global gotH
+    # wait(500, MSEC)
+    goal_head=(int.heading()-180)
+    print("goal: "+str(goal_head))
+    gotH=True
+    
+def heading_control(turn):
+    global goal_head
+    global getH
+    global gotH
+    #When Turning
+    if turn!=0:
+        getH=False
+        gotH=False
+        return turn
+    
+    #When Done turning, get heading
+    elif turn==0 and not getH:
+        getH=True
+        # h_thread=Thread(get_heading)
+        timer.event(get_heading,500)
+        
+    #runs the heading correction after it has the heading, which also means it only kicks in for longer drives
+    elif turn==0 and gotH:
+        chead=int.heading()
+        chead-=180
+        turn=(goal_head-chead)/4 #PID here?
+        print("chead: "+str(chead)+"-goal: "+str(goal_head))
+        return turn
+        # if last_head==999:
+        #     turn=(goal_head-chead)/4
+        #     print("chead: "+str(chead)+"-goal: "+str(goal_head))
+        #     return turn
+        # else:
+        #     turn=(goal_head-chead)/4
+        #     print("chead: "+str(chead)+"-goal: "+str(goal_head))
+        #     return turn
+    else: print("Unexpexted Issue With Heading Control")
+    
 def stop_drive():
     """Stop all drive motors."""
     front_left.stop()
@@ -161,6 +211,45 @@ def stop_drive():
     back_right.stop()
 #endregion
 #region ==================== SENSOR FUNCTIONS ====================
+
+def PID(desired_state,current_state,Kp,Ki,Kd,prev_error,total_error):
+    #Blank PID Function, so we can use it everywhere
+    '''## Desired position (adjust number based on what we need the robot to do)
+    desired_state = 0
+
+    ## Variables used in PID algo (adjust numbers based on what we need the robot to do)
+    Kp = 0
+    Ki = 0
+    Kd = 0
+    ## Remember to test each constants one at a time, this affects output of PID controller
+
+    Ki_total = 0 # sum from integral
+    prev_error = 0
+
+    while True():'''
+    ## get error
+    error = desired_state - current_state
+    ## Kp : proportional correction
+    proportional = Kp * error
+    ## Ki : integral correction
+    total_error += error ## add current error to summation
+    integral = Ki * total_error ## get Ki Result by applying tuning constant to total
+    ## consider limits on Ki perchance?
+    ## Kd : derivative
+    derivative = Kd * (error - prev_error)
+    prev_error = error
+    ## sum P, I, and D
+    PID_result = proportional + integral + derivative
+    return PID_result,total_error,prev_error
+    ## apply PID_result (sum) to the bot depending on which component we want it to adjust
+
+def initialize():
+    gpsh=gps.heading()
+    # int.calibrate
+    # while int.is_calibrating:
+    #     wait(10,MSEC)
+    #     print("calibrating")
+    int.set_heading(gpsh)
 #region GPS Functions
 def reset_gps():
     #If we want, we can find a fixed reference points, find its setting, then calibrate the gps to it. 
@@ -247,6 +336,7 @@ def gps_goto(x,y):
                 mx=x-xc
                 my=y-yc
                 angle=math.degrees(math.atan2(my,mx))
+                print("ANGLE: "+str(angle))
                 gps_gohead(angle)
                 heading_set=True
             dis=int_margin(xc,yc,x,y)
@@ -267,6 +357,8 @@ def gps_goto(x,y):
 #other funcs here
 #endregion 
 #region ==================== MAIN PROGRAM ====================
+initialize()
+
 brain.screen.print("X-Drive Ready")
 brain.screen.new_line()
 brain.screen.print("Use controller to drive")
@@ -288,7 +380,9 @@ brain.screen.print("Use controller to drive")
 # Main control loop
 
 while True:
-    gps_funcs()
+    # gps_funcs()
     x_drive_control()
+    # print("int: "+str(int.heading()))
+    
     wait(100, MSEC)  # Small delay to prevent CPU overload
 #endregion

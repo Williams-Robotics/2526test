@@ -115,33 +115,7 @@ def bool_margin(x,y,tx,ty):
 def int_margin(x,y,tx,ty):
     mx=abs(x-tx)
     my=abs(y-ty)
-    return math.sqrt(mx**2+my**2)
-def gps_gohead(heading):
-    arrived=False
-    while not arrived:
-        if gps.quality()<100: continue
-        head=gps.heading()
-        diff=heading-head
-        if abs(diff)>2:arrived=True
-        else: 
-            if diff<-180:diff+=360
-            elif diff>180:dif-=360
-            if (diff>0 and diff<180):
-                                
-            else:
-                
-            
-def gps_goto(x,y):
-    arrived=False
-    while not arrived:
-        if gps.quality()<100: continue
-        xc=gps.x_position()
-        yc=gps.y_position()
-        if bool_margin(xc,yc,x,y):arrived=True
-        else:
-            
-        
-    
+    return math.sqrt(mx**2+my**2)    
 def ai_funcs():
     objs=ai.take_snapshot(AiVision.ALL_AIOBJS)
     #bobjs=ai.take_snapshot(ai__BBLUE)

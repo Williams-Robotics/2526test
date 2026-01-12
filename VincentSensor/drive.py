@@ -17,11 +17,11 @@ import math
 
 # ==================== MOTOR CONFIGURATION ====================
 # Configure your motor ports here
-FRONT_LEFT_PORT = Ports.PORT8
-FRONT_RIGHT_PORT = Ports.PORT3
-BACK_LEFT_PORT = Ports.PORT9
-BACK_RIGHT_PORT = Ports.PORT4
-GPS_PORT=Ports.PORT20
+FRONT_LEFT_PORT = Ports.PORT19
+FRONT_RIGHT_PORT = Ports.PORT11
+BACK_LEFT_PORT = Ports.PORT10
+BACK_RIGHT_PORT = Ports.PORT1
+GPS_PORT=Ports.PORT9
 
 
 # Configure motor reverse settings (True = reversed, False = normal)
