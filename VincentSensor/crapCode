@@ -1,0 +1,150 @@
+def get_heading():
+    global gotH
+    global getH
+    global goal_head
+    global running
+    wait(500, MSEC)
+    goal_head=int.heading()
+    goal_head-=180
+    print("goal: "+str(goal_head))
+    gotH=True
+    running=False    
+    
+    
+def BADheading_control(turn):
+    global goal_head
+    global getH
+    global gotH
+    global prev_head_error
+    global total_head_error
+    global h_thread
+    global running
+    #When Turning
+    if turn!=0:
+        getH=False
+        gotH=False
+        prev_head_error=0
+        total_head_error=0
+        return turn
+    
+    #When Done turning, get heading
+    elif turn==0 and not getH and not running:
+        getH=True
+        running=True
+        h_thread=Thread(get_heading)
+        print("getting")
+        # timer.event(get_heading,500)
+        return turn
+        
+    #runs the heading correction after it has the heading, which also means it only kicks in for longer drives
+    elif turn==0 and gotH:
+        chead=int.heading()
+        chead-=180
+        turn=(goal_head-chead)/4 
+
+        #turn,prev_head_error,total_head_error=PID(goal_head,chead,.25,1,1,prev_head_error,total_head_error)  #THIS IS PID! please tune the values, the .25 is just from what i used before. 
+        
+        print("chead: "+str(chead)+"-goal: "+str(goal_head))
+        return turn
+        # if last_head==999:
+        #     turn=(goal_head-chead)/4
+        #     print("chead: "+str(chead)+"-goal: "+str(goal_head))
+        #     return turn
+        # else:
+        #     turn=(goal_head-chead)/4
+        #     print("chead: "+str(chead)+"-goal: "+str(goal_head))
+        #     return turn
+    else: 
+        print("Unexpexted Issue With Heading Control")
+        return turn
+
+
+def int_heading_control(turn):
+    global goal_head
+    global getH
+    global prev_head_error
+    global total_head_error
+    #When Turning
+    if turn!=0:
+        getH=False
+        reset_gps_avg()
+        prev_head_error=0
+        total_head_error=0
+        return turn
+    
+    #When Done turning, get heading
+    elif turn==0 and not getH:
+        if abs(int.gyro_rate(AxisType.XAXIS))<1:
+            goal_head=(int.heading()-180)
+            getH=True
+            print("got: "+str(int.gyro_rate(AxisType.XAXIS)))
+        # timer.event(get_heading,500)
+        return turn
+        
+    #runs the heading correction after it has the heading, which also means it only kicks in for longer drives
+    elif turn==0 and getH:
+        chead=int.heading()
+        chead-=180
+        # turn=(goal_head-chead)/4 
+
+        # turn,prev_head_error,total_head_error=PID(goal_head,chead,.4,.1,0,prev_head_error,total_head_error)  #THIS IS PID! please tune the values, the .25 is just from what i used before. 
+        # if turn>50: turn=50
+        print("chead: "+str(chead)+"-goal: "+str(goal_head))
+        return turn
+
+    else: 
+        print("Unexpexted Issue With Heading Control")
+        return turn
+
+
+def sensor_commands():
+    h=gps.heading()
+    gpsavg.append(h)
+    if len(gpsavg)>50:gpsavg.pop(0)
+def get_gps_avg():
+    if len(gpsavg)>0: return sum(gpsavg)/len(gpsavg)
+    else: return -1
+def reset_gps_avg():
+    gpsavg.clear()
+    
+    
+    def gps_goto(x,y):
+    arrived=False
+    heading_set=False
+    while not arrived:
+        if gps.quality()<100: continue
+        xc=gps.x_position()
+        yc=gps.y_position()
+        if bool_margin(xc,yc,x,y):
+            arrived=True
+            stop_drive()
+        else:
+            if not heading_set:
+                mx=x-xc
+                my=y-yc
+                print("Pos: (",xc,",",yc,")")
+                print("dis: (",mx,",",my,")")
+                
+                angle=math.degrees(math.atan2(my,mx))
+
+                print("ANGLE: "+str(angle))
+                gps_gohead(angle)
+                heading_set=True
+                wait(1500,MSEC)
+            dis=int_margin(xc,yc,x,y)
+            print("dis"+str(dis))
+            if dis>200:f=10              
+            elif dis>150:f=10               
+            elif dis>120:f=10               
+            elif dis>90:f=10               
+            elif dis>60:f=5               
+            elif dis>30:f=4               
+            elif dis>15:f=3               
+            elif dis>5:f=2              
+            else:f=1
+            run_drive_motors(f,0,0)
+            print("Pos: (",xc,",",yc,"), HEAD: "+str(gps.heading()))
+            
+            wait(100, MSEC)
+    print("arrived")               
+#endregion

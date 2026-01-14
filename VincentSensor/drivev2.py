@@ -134,7 +134,6 @@ controller.buttonL2.pressed(intake_reverse_toggle)
 goal_head=999
 last_head=999
 getH=False
-gotH=False
 prev_head_error=0
 total_head_error=0
 def x_drive_control():
@@ -144,13 +143,14 @@ def x_drive_control():
     Right joystick (X-axis): Rotation
     """
     # Get controller inputs
-    forward = controller.axis3.position()  # Left stick Y-axis
-    strafe = controller.axis4.position()   # Left stick X-axis
-    turn = controller.axis1.position()     # Right stick X-axis
+    forward = controller.axis3.position()/2  # Left stick Y-axis
+    strafe = controller.axis4.position() 
+    strafe=0# Left stick X-axis
+    turn = controller.axis1.position()/2     # Right stick X-axis
     run_drive_motors(forward,strafe,turn)
     
 def run_drive_motors(forward,strafe,turn):
-    turn=heading_control(turn)
+    turn=newgps_heading_control(turn)
        
     # Calculate motor speeds for X-drive kinematics
     # X-drive formula accounts for diagonal motor placement
@@ -165,53 +165,79 @@ def run_drive_motors(forward,strafe,turn):
     back_left.spin(FORWARD, back_left_speed, PERCENT)
     back_right.spin(FORWARD, back_right_speed, PERCENT)
 #Gets the heading of the robot after a slight delay, so it gets the heading when it is stopped
-def get_heading(turn):
-    global gotH
-    # wait(500, MSEC)
-    goal_head=(int.heading()-180)
-    print("goal: "+str(goal_head))
-    gotH=True
-    
-def heading_control(turn):
+def newgps_heading_control(turn):
     global goal_head
     global getH
-    global gotH
     global prev_head_error
     global total_head_error
     #When Turning
     if turn!=0:
         getH=False
-        gotH=False
         prev_head_error=0
         total_head_error=0
         return turn
     
     #When Done turning, get heading
     elif turn==0 and not getH:
-        getH=True
-        # h_thread=Thread(get_heading)
-        timer.event(get_heading,500)
+        if abs(gps.gyro_rate(AxisType.XAXIS))<1:
+            goal_head=(gps.orientation(OrientationType.YAW))
+            getH=True
+            print("got: "+str(gps.gyro_rate(AxisType.XAXIS)))
+        # timer.event(get_heading,500)
+        return turn
         
     #runs the heading correction after it has the heading, which also means it only kicks in for longer drives
-    elif turn==0 and gotH:
-        chead=int.heading()
+    elif turn==0 and getH:
+        chead=(gps.orientation(OrientationType.YAW))
+        # turn=(goal_head-chead)/4 
+
+        turn,prev_head_error,total_head_error=PID(goal_head,chead,.4,.1,0,prev_head_error,total_head_error)  #THIS IS PID! please tune the values, the .25 is just from what i used before. 
+        if turn>50: turn=50
+        print("chead: "+str(chead)+"-goal: "+str(goal_head))
+        return turn
+
+    else: 
+        print("Unexpexted Issue With Heading Control")
+        return turn
+    
+def gps_heading_control(turn):
+    global goal_head
+    global getH
+    global prev_head_error
+    global total_head_error
+    #When Turning
+    if turn!=0:
+        getH=False
+        # reset_gps_avg()
+        prev_head_error=0
+        total_head_error=0
+        print("Clear")
+        return turn
+    
+    #When Done turning, get heading
+    elif turn==0 and not getH:
+        if abs(int.gyro_rate(AxisType.XAXIS))<1:
+            goal_head=(gps.heading()-180)
+            getH=True
+            print("got: "+str(int.gyro_rate(AxisType.XAXIS)))
+        # timer.event(get_heading,500)
+        return turn
+        
+    #runs the heading correction after it has the heading, which also means it only kicks in for longer drives
+    elif turn==0 and getH and (abs(goal_head-gps.heading()))>2:
+        chead=gps.heading()
         chead-=180
         turn=(goal_head-chead)/4 
 
-        #turn,prev_head_error,total_head_error=PID(goal_head,chead,.25,1,1,prev_head_error,total_head_error)  #THIS IS PID! please tune the values, the .25 is just from what i used before. 
-        
+        # turn,prev_head_error,total_head_error=PID(goal_head,chead,.4,.1,0,prev_head_error,total_head_error)  #THIS IS PID! please tune the values, the .25 is just from what i used before. 
+        if turn>30: turn=30
         print("chead: "+str(chead)+"-goal: "+str(goal_head))
         return turn
-        # if last_head==999:
-        #     turn=(goal_head-chead)/4
-        #     print("chead: "+str(chead)+"-goal: "+str(goal_head))
-        #     return turn
-        # else:
-        #     turn=(goal_head-chead)/4
-        #     print("chead: "+str(chead)+"-goal: "+str(goal_head))
-        #     return turn
-    else: print("Unexpexted Issue With Heading Control")
-    
+
+    else: 
+        print("Unexpexted Issue With Heading Control")
+        return turn
+  
 def stop_drive():
     """Stop all drive motors."""
     front_left.stop()
@@ -267,12 +293,14 @@ def PID(desired_state,current_state,Kp,Ki,Kd,prev_error,total_error):
     ## apply PID_result (sum) to the bot depending on which component we want it to adjust
 
 def initialize():
+    gps.set_origin(0,-19,MM)
     gpsh=gps.heading()
-    # int.calibrate
+    int.calibrate
     # while int.is_calibrating:
-    #     wait(10,MSEC)
-    #     print("calibrating")
+    # print("calibrating")
     int.set_heading(gpsh)
+    wait(1500,MSEC)
+    # gpsavg=[]
 #region GPS Functions
 def reset_gps():
     #If we want, we can find a fixed reference points, find its setting, then calibrate the gps to it. 
@@ -295,7 +323,7 @@ def gps_funcs():
         qual="Awful"
     print("Pos: (",xc,",",yc,") Heading: ",head,"Quality: ",qual)
 def bool_margin(x,y,tx,ty):
-    error=20
+    error=50
     mx=abs(x-tx)
     my=abs(y-ty)
     if mx>error or my>error: return False
@@ -324,59 +352,78 @@ def gps_gohead(heading):
         else:
             c1=False 
             if (diff>0 and diff<180):
-                 if diff>150:turn=80               
-                 elif diff>120:turn=60               
-                 elif diff>90:turn=60               
-                 elif diff>60:turn=40               
-                 elif diff>30:turn=30               
-                 elif diff>15:turn=20               
-                 elif diff>5:turn=10               
-                 else:turn=5              
+                 if diff>150:turn=50               
+                 elif diff>120:turn=40               
+                 elif diff>90:turn=20               
+                 elif diff>60:turn=20               
+                 elif diff>30:turn=10               
+                 elif diff>15:turn=5               
+                 elif diff>5:turn=5               
+                 else:turn=3             
             else:
-                if diff<-150:turn=-800               
-                elif diff<-120:turn=-60               
-                elif diff<-90:turn=-50               
-                elif diff<-60:turn=-40               
-                elif diff<-30:turn=-30               
-                elif diff<-15:turn=-20               
-                elif diff<-5:turn=-10               
-                else:turn=-5 
+                if diff<-150:turn=-50               
+                elif diff<-120:turn=-40               
+                elif diff<-90:turn=-20               
+                elif diff<-60:turn=-20               
+                elif diff<-30:turn=-10               
+                elif diff<-15:turn=-5               
+                elif diff<-5:turn=-5               
+                else:turn=-3
             run_drive_motors(0,0,turn)
             wait(5, MSEC)
     print("arrived")        
+def goto_arr():
+    global arrived
+    while not arrived:
+        if bool_margin(gps.x_position(),gps.y_position(),goalx,goaly):
+            arrived=True
+            stop_drive()
 def gps_goto(x,y):
+    global arrived
+    global goalx
+    global goaly
+    goalx=x
+    goaly=y
     arrived=False
+    counter=5
     heading_set=False
+    arr_thread=Thread(goto_arr)
     while not arrived:
         if gps.quality()<100: continue
         xc=gps.x_position()
         yc=gps.y_position()
-        if bool_margin(xc,yc,x,y):
-            arrived=True
-            stop_drive()
-        else:
-            if not heading_set:
-                mx=x-xc
-                my=y-yc
-                angle=math.degrees(math.atan2(my,mx))
-                print("ANGLE: "+str(angle))
-                gps_gohead(angle)
-                heading_set=True
-            dis=int_margin(xc,yc,x,y)
-            print("dis"+str(dis))
-            if dis>200:f=100               
-            elif dis>150:f=80               
-            elif dis>120:f=60               
-            elif dis>90:f=60               
-            elif dis>60:f=40               
-            elif dis>30:f=30               
-            elif dis>15:f=20               
-            elif dis>5:f=10               
-            else:f=5 
-            run_drive_motors(f,0,0)
-            wait(5, MSEC)
+        if counter%5==0 and int_margin(xc,yc,x,y)>150:
+            counter=0
+            mx=x-xc
+            my=y-yc
+            print("Pos: (",xc,",",yc,")")
+            print("dis: (",mx,",",my,")")
+            
+            angle=math.degrees(math.atan2(mx,my))
+
+            print("ANGLE: "+str(angle))
+            gps_gohead(angle)
+            heading_set=True
+            # wait(1500,MSEC)
+        dis=int_margin(xc,yc,x,y)
+        print("dis"+str(dis))
+        counter+=1
+        if dis>200:f=10              
+        elif dis>150:f=10               
+        elif dis>120:f=10               
+        elif dis>90:f=10               
+        elif dis>60:f=5               
+        elif dis>30:f=4               
+        elif dis>15:f=3               
+        elif dis>5:f=2              
+        else:f=1
+        run_drive_motors(f,0,0)
+        print("Pos: (",xc,",",yc,"), HEAD: "+str(gps.heading()) +"Counter: "+str(counter))
+        
+        wait(100, MSEC)
     print("arrived")               
 #endregion
+
 #other funcs here
 #endregion 
 #region ==================== MAIN PROGRAM ====================
@@ -389,7 +436,7 @@ brain.screen.print("Use controller to drive")
 # GPS TESTING
 # gps_goto(-800,-100)
 # wait(1000, MSEC)
-# gps_goto(-800,-100)
+# gps_goto(-500,500)
 # wait(1000, MSEC)
 
 # gps_gohead(0)
@@ -403,8 +450,9 @@ brain.screen.print("Use controller to drive")
 # Main control loop
 
 while True:
-    # gps_funcs()
+
     x_drive_control()
+    # print("heading: "+str(get_gps_avg()))
     # print("int: "+str(int.heading()))
     
     wait(100, MSEC)  # Small delay to prevent CPU overload
