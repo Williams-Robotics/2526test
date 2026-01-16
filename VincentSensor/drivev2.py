@@ -191,8 +191,16 @@ def newgps_heading_control(turn):
         chead=(gps.orientation(OrientationType.YAW))
         # turn=(goal_head-chead)/4 
 
-        turn,prev_head_error,total_head_error=PID(goal_head,chead,.3,.005,.08,prev_head_error,total_head_error)  #THIS IS PID! please tune the values, the .25 is just from what i used before. 
+        heading_error = goal_head - chead
+        if heading_error > 180:
+            heading_error -= 360
+        elif heading_error < -180:
+            heading_error += 360
+
+        turn,prev_head_error,total_head_error=PID(0,-heading_error,.8,0,0.15,prev_head_error,total_head_error)  #THIS IS PID! please tune the values, the .25 is just from what i used before. 
         if turn>50: turn=50
+        elif turn < -50:
+            turn = -50
         print("chead: "+str(chead)+"-goal: "+str(goal_head))
         return turn
 
@@ -293,7 +301,7 @@ def PID(desired_state,current_state,Kp,Ki,Kd,prev_error,total_error):
     ## apply PID_result (sum) to the bot depending on which component we want it to adjust
 
 def initialize():
-    gps.set_origin(0,-19,MM)
+    gps.set_origin(0,5,MM)
     gpsh=gps.heading()
     int.calibrate
     # while int.is_calibrating:
@@ -461,7 +469,9 @@ brain.screen.print("Use controller to drive")
 # wait(3000, MSEC)
 # gps_gohead(0)
 # wait(3000, MSEC)
-# Main control loop
+# gps_gohead(0)
+# wait(3000, MSEC)
+#Main control loop
 
 while True:
 
