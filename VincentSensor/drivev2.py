@@ -191,7 +191,7 @@ def newgps_heading_control(turn):
         chead=(gps.orientation(OrientationType.YAW))
         # turn=(goal_head-chead)/4 
 
-        turn,prev_head_error,total_head_error=PID(goal_head,chead,.4,.1,0,prev_head_error,total_head_error)  #THIS IS PID! please tune the values, the .25 is just from what i used before. 
+        turn,prev_head_error,total_head_error=PID(goal_head,chead,.3,.005,.08,prev_head_error,total_head_error)  #THIS IS PID! please tune the values, the .25 is just from what i used before. 
         if turn>50: turn=50
         print("chead: "+str(chead)+"-goal: "+str(goal_head))
         return turn
@@ -289,7 +289,7 @@ def PID(desired_state,current_state,Kp,Ki,Kd,prev_error,total_error):
     prev_error = error
     ## sum P, I, and D
     PID_result = proportional + integral + derivative
-    return PID_result,total_error,prev_error
+    return PID_result, prev_error,total_error
     ## apply PID_result (sum) to the bot depending on which component we want it to adjust
 
 def initialize():
@@ -385,14 +385,22 @@ def gps_goto(x,y):
     goalx=x
     goaly=y
     arrived=False
-    counter=5
+    counter=2000
     heading_set=False
-    arr_thread=Thread(goto_arr)
+    prev_gps_error=0
+    total_gps_error=0
+    # arr_thread=Thread(goto_arr)
     while not arrived:
-        if gps.quality()<100: continue
+        if gps.quality()<100:
+            stop_drive()
+            print("NO GPS")
         xc=gps.x_position()
         yc=gps.y_position()
-        if counter%5==0 and int_margin(xc,yc,x,y)>150:
+        if bool_margin(xc,yc,x,y):
+            arrived=True
+            stop_drive()
+            continue
+        if counter%2000==0 and int_margin(xc,yc,x,y)>150:
             counter=0
             mx=x-xc
             my=y-yc
@@ -408,19 +416,21 @@ def gps_goto(x,y):
         dis=int_margin(xc,yc,x,y)
         print("dis"+str(dis))
         counter+=1
-        if dis>200:f=10              
-        elif dis>150:f=10               
-        elif dis>120:f=10               
-        elif dis>90:f=10               
-        elif dis>60:f=5               
-        elif dis>30:f=4               
-        elif dis>15:f=3               
-        elif dis>5:f=2              
-        else:f=1
+        # if dis>200:f=10              
+        # elif dis>150:f=10               
+        # elif dis>120:f=10               
+        # elif dis>90:f=10               
+        # elif dis>60:f=5               
+        # elif dis>30:f=4               
+        # elif dis>15:f=3               
+        # elif dis>5:f=2              
+        # else:f=1
+        f,prev_gps_error,total_gps_error=PID(dis,0,.1,.005,.01,prev_gps_error,total_gps_error)
+        if f>50: f=50
         run_drive_motors(f,0,0)
-        print("Pos: (",xc,",",yc,"), HEAD: "+str(gps.heading()) +"Counter: "+str(counter))
+        print("Pos: (",xc,",",yc,"), HEAD: "+str(gps.heading()) +"Counter: "+str(counter)+"f: "+str(f))
         
-        wait(100, MSEC)
+        # wait(100, MSEC)
     print("arrived")               
 #endregion
 
@@ -438,6 +448,10 @@ brain.screen.print("Use controller to drive")
 # wait(1000, MSEC)
 # gps_goto(-500,500)
 # wait(1000, MSEC)
+# gps_goto(500,500)
+# gps_gohead(0)
+# wait(1000, MSEC)
+
 
 # gps_gohead(0)
 # wait(3000, MSEC)
