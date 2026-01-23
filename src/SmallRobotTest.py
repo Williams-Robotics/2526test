@@ -6,7 +6,18 @@
 # 	Description:  V5 X-Drive Control & 2026 Code                               #
 #                                                                              #
 # ---------------------------------------------------------------------------- #
+'''
+Controls: 
 
+Left Stick:Forwards and Back
+Right Stick: Rotation
+
+Down DPAD: Toggle Reverse Driving(flip which way is forward, useful for grabbing vs scoring)
+A:Toggle Tounge
+B: Toggle Wing
+X: Toggle Butt(Big Robot Only)
+Y: Hold to enable strafing with left stick
+'''
 #region Setup
 # Library imports
 from vex import *
@@ -18,12 +29,13 @@ import math
 #endregion
 #region ==================== MOTOR & PNEUMATICS CONFIGURATION ====================
 # Configure your motor ports here
-FRONT_LEFT_PORT = Ports.PORT10
-FRONT_RIGHT_PORT = Ports.PORT20
-BACK_LEFT_PORT = Ports.PORT1
-BACK_RIGHT_PORT = Ports.PORT11
-INTAKE_PORT=Ports.PORT3
-OUTAKE_PORT=Ports.PORT4
+FRONT_LEFT_PORT = Ports.PORT5
+FRONT_RIGHT_PORT = Ports.PORT2
+BACK_LEFT_PORT = Ports.PORT3
+BACK_RIGHT_PORT = Ports.PORT4
+INTAKE_PORT=Ports.PORT9
+OUTAKE_PORT=Ports.PORT1
+WING_PORT=Ports.PORT20
 
 
 
@@ -34,11 +46,12 @@ BACK_LEFT_REVERSE = False
 BACK_RIGHT_REVERSE = True
 INTAKE_REVERSE = False
 OUTAKE_REVERSE = True
+WING_REVERSE=False
 #endregion
 #region ==================== SENSOR CONFIGURATION ====================
 AI_PORT=Ports.PORT13
 D_PORT=Ports.PORT15
-GPS_PORT=Ports.PORT9
+GPS_PORT=Ports.PORT10
 INT_PORT=Ports.PORT21
 #endregion
 #region ==================== DRIVE MOTOR INITIALIZATION ====================
@@ -51,28 +64,26 @@ gps=Gps(GPS_PORT,0,0)
 #endregion
 #region ==================== INTAKE FUNCTIONS ====================
 intake  = Motor(INTAKE_PORT, GearSetting.RATIO_18_1, INTAKE_REVERSE)
+wing  = Motor(WING_PORT, GearSetting.RATIO_36_1, WING_REVERSE)
 outake = Motor(OUTAKE_PORT, GearSetting.RATIO_18_1, OUTAKE_REVERSE)
 tongue_control=Pneumatics(brain.three_wire_port.h)
-wing_control=Pneumatics(brain.three_wire_port.g)
 
 
 #right and left relative to viewing from the front
-def intake_forward_toggle():
+def intake_forward_toggle():    
     global intake_forward, intake_reverse
 
     if intake_forward:
         # If already running forward, stop both motors concurrently
         intake.stop(HOLD)
+        intake_forward = False
+        
     else:
-        # If reverse is on, turn it off first
-        if intake_reverse:
-            intake_reverse = False
-            intake.stop(HOLD)
-        # Spin both motors in forward intake direction concurrently
+        intake_reverse = False
+        intake_forward = True
+        intake.stop(HOLD)
         intake.spin(FORWARD, 100, PERCENT)
     # Toggle the forward state
-    intake_reverse = False
-    intake_forward = True
     
 
 def intake_reverse_toggle():
@@ -81,15 +92,13 @@ def intake_reverse_toggle():
     if intake_reverse:
         # If already running reverse, stop both motors concurrently
         intake.stop(HOLD)
+        intake_reverse = False
+        
     else:
-        # If forward is on, turn it off first
-        if intake_forward:
-            intake_forward = False
-            intake.stop(HOLD)
-        # Spin both motors in reverse intake direction concurrently
+        intake_forward = False
+        intake_reverse = True
+        intake.stop(HOLD)
         intake.spin(REVERSE, 100, PERCENT)
-    intake_reverse = True
-    intake_forward = False
     
 def outake_forward_toggle():
     global outake_forward, outake_reverse
@@ -97,17 +106,12 @@ def outake_forward_toggle():
     if outake_forward:
         # If already runnoug forward, stop both motors concurrently
         outake.stop(HOLD)
+        outake_forward=False
     else:
-        # If reverse is on, turn it off first
-        if outake_reverse:
             outake_reverse = False
+            outake_forward=True
             outake.stop(HOLD)
-        # Spou both motors ou forward outake direction concurrently
-        outake.spin(FORWARD, 100, PERCENT)
-    # Toggle the forward state
-    outake_reverse = False
-    outake_forward = True
-    
+            outake.spin(FORWARD, 100, PERCENT)
 
 def outake_reverse_toggle():
     global outake_reverse, outake_forward
@@ -115,15 +119,14 @@ def outake_reverse_toggle():
     if outake_reverse:
         # If already runnoug reverse, stop both motors concurrently
         outake.stop(HOLD)
+        outake_reverse=False
     else:
-        # If forward is on, turn it off first
-        if outake_forward:
             outake_forward = False
+            outake_reverse=True
             outake.stop(HOLD)
+            outake.spin(REVERSE, 100, PERCENT)
+            # outake.stop(HOLD)
         # Spou both motors ou reverse outake direction concurrently
-        outake.spin(REVERSE, 100, PERCENT)
-    outake_reverse = True
-    outake_forward = False
 
 def tongue_toggle_fn():
     global tongue_toggle
@@ -133,8 +136,13 @@ def tongue_toggle_fn():
 def wing_toggle_fn():
     global wing_toggle
     wing_toggle = not wing_toggle
-    if wing_toggle:wing_control.open()
-    else:wing_control.close()
+    if wing_toggle:wing.spin_to_position(-90, DEGREES)
+    else:wing.spin_to_position(0, DEGREES)
+    
+def rev_drive_toggle_fn():
+    global reverseDriveToggle
+    reverseDriveToggle = not reverseDriveToggle
+
 
 
 tongue_toggle = False
@@ -157,6 +165,9 @@ controller.buttonR1.pressed(outake_forward_toggle)
 
 outake_reverse = False
 controller.buttonR2.pressed(outake_reverse_toggle)
+
+reverseDriveToggle=False
+controller.buttonDown.pressed(rev_drive_toggle_fn)
 
 #endregion'
 
@@ -197,11 +208,16 @@ def x_drive_control():
     # Get controller inputs
     forward = controller.axis3.position()  # Left stick Y-axis
     strafe = controller.axis4.position() 
-    strafe=0# Left stick X-axis
-    turn = controller.axis1.position()    # Right stick X-axis
+    # strafe=0# Left stick X-axis
+    turn = controller.axis1.position()   # Right stick X-axis
     run_drive_motors(forward,strafe,turn)
     
 def run_drive_motors(forward,strafe,turn):
+    if forward==strafe==turn==0:stop_drive()
+    if not strafeToggle: strafe=0
+    if reverseDriveToggle: 
+        forward*=-1
+        strafe*=-1
     # turn=newgps_heading_control(turn)
        
     # Calculate motor speeds for X-drive kinematics
@@ -366,7 +382,10 @@ def initialize():
     # while int.is_calibrating:
     # print("calibrating")
     int.set_heading(gpsh)
+    wing.set_position(0, DEGREES)
+    
     wait(1500,MSEC)
+    
     # gpsavg=[]
 #region GPS Functions
 def reset_gps():
@@ -539,13 +558,15 @@ brain.screen.print("Use controller to drive")
 xc=gps.x_position()
 yc=gps.y_position()
 while True:
-
+    if controller.buttonY.pressing(): strafeToggle=True
+    else:strafeToggle=False
+    
     x_drive_control()
     controller.screen.clear_screen()
     x=gps.x_position()
     y=gps.y_position()
     head=gps.heading()
-    print(x,y,head)
+    # print(x,y,head)
     controller.screen.set_cursor(1, 1)
     controller.screen.print(str(x)+", "+str(y))
     controller.screen.set_cursor(2, 1)
@@ -558,5 +579,6 @@ while True:
     # initialize()
     # print_gps_status()
     print("Pos: (",xc,",",yc,"), HEAD: "+str(gps.heading()))
+    # print(strafeToggle)
     wait(100, MSEC)  # Small delay to prevent CPU overload
 #endregion
