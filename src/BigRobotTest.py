@@ -236,7 +236,7 @@ def run_drive_motors(forward,strafe,turn):
     if reverseDriveToggle: 
         forward*=-1
         strafe*=-1
-    turn=newgps_heading_control(turn)
+    # turn=newgps_heading_control(turn)
        
     # Calculate motor speeds for X-drive kinematics
     # X-drive formula accounts for diagonal motor placement
@@ -569,13 +569,36 @@ brain.screen.print("Use controller to drive")
 # gps_goto(365,440)
 # wait(3000, MSEC)
 
-#AUTON
+# region AUTON
+def gpsTest():
+    controller.screen.clear_screen()
+    x=gps.x_position()
+    y=gps.y_position()
+    head=gps.heading()
+    # print(x,y,head)
+    # print(intake.torque(TorqueUnits.NM))
+    print(outake_forward,outake_reverse)
+    controller.screen.set_cursor(1, 1)
+    controller.screen.print(str(x)+", "+str(y))
+    controller.screen.set_cursor(2, 1)
+    controller.screen.print(head)
+    wait(250,MSEC)
+# tongue_toggle_fn()
+# gpsTest()
+# wait(150,MSEC)
+# intake_forward_toggle()
+# run_drive_motors(100,0,0)
+# gpsTest()
+# wait(3000,MSEC)
+# run_drive_motors(0,0,0)
+# # wait(1500,MSEC)
+# intake_forward_toggle()
+# run_drive_motors(-50,0,0)
+# butt_toggle_fn()
+# gpsTest()
+# wait(1500,MSEC)
+# stop_drive()
 
-tongue_toggle_fn()
-wait(150,MSEC)
-intake_forward_toggle()
-run_drive_motors(100,0,0)
-wait(500,MSEC)
 #Drive forward
 #grab 3 Balls
 #drive to goal and drop flap
@@ -584,7 +607,7 @@ wait(500,MSEC)
 #grab 3 red. Spit. Grab 3 blue
 #do it
 #keep doing it
-
+#endregion
 
 
 xc=gps.x_position()
