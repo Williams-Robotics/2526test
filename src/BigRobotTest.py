@@ -238,7 +238,7 @@ def run_drive_motors(forward,strafe,turn):
     if reverseDriveToggle: 
         forward*=-1
         strafe*=-1
-    turn=newgps_heading_control(turn)
+    # turn=newgps_heading_control(turn)
        
     # Calculate motor speeds for X-drive kinematics
     # X-drive formula accounts for diagonal motor placement
@@ -620,7 +620,7 @@ intake_forward_toggle()
 #grab 3 red. Spit. Grab 3 blue
 #do it
 #keep doing it
-
+#endregion
 
 
 xc=gps.x_position()
