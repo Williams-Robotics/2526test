@@ -230,15 +230,16 @@ def x_drive_control():
     turn = controller.axis1.position()    # Right stick X-axis
     run_drive_motors(forward,strafe,turn)
     
-def run_drive_motors(forward,strafe,turn):
+def run_drive_motors(forward,strafe,turn, ignore=False):
     if forward==strafe==turn==0:
         stop_drive()
+        print("ESTOP")
         return
     if not strafeToggle: strafe=0
     if reverseDriveToggle: 
         forward*=-1
         strafe*=-1
-    turn=newgps_heading_control(turn)
+    if not ignore: turn=newgps_heading_control(turn)
        
     # Calculate motor speeds for X-drive kinematics
     # X-drive formula accounts for diagonal motor placement
@@ -572,37 +573,60 @@ brain.screen.print("Use controller to drive")
 # wait(3000, MSEC)
 
 
-def autonomous():
-    initialize()
-    brain.screen.clear_screen()
-    brain.screen.print("autonomous code")
-    #AUTON
-    tongue_toggle_fn()
-    butt_toggle_fn()
-    wait(150,MSEC)
-    intake_forward_toggle()
-    timer.clear()
-    while timer.time(MSEC) < 1500:
-        run_drive_motors(-80, 0, 0)   # forward
-        wait(10, MSEC)
-    stop_drive()
-    outake_forward_toggle()
+# def autonomous0():
+#     initialize()
+#     brain.screen.clear_screen()
+#     brain.screen.print("autonomous code")
+#     #AUTON
+#     tongue_toggle_fn()
+#     butt_toggle_fn()
+#     wait(150,MSEC)
+#     intake_forward_toggle()
+#     timer.clear()
+#     while timer.time(MSEC) < 1500:
+#         run_drive_motors(-80, 0, 0)   # forward
+#         wait(10, MSEC)
+#     stop_drive()
+#     outake_forward_toggle()
    
 
-def autonomous2():
+# def autonomous2():
+#     tongue_toggle_fn()
+#     wait(150,MSEC)
+#     intake_forward_toggle()
+#     run_drive_motors(100,0,0)
+#     wait(3000,MSEC)
+#     run_drive_motors(0,0,0)
+#     # wait(1500,MSEC)
+#     intake_forward_toggle()
+#     run_drive_motors(-50,0,0)
+#     butt_toggle_fn()
+#     wait(1500,MSEC)
+#     stop_drive()
+def autonomousgps():
+    gps_goto(894,-1241)
+    gps_gohead(87)
     tongue_toggle_fn()
-    wait(150,MSEC)
+    gps_goto(1363,-1174)
     intake_forward_toggle()
-    run_drive_motors(100,0,0)
-    wait(3000,MSEC)
-    run_drive_motors(0,0,0)
-    # wait(1500,MSEC)
+def autonomous():
+    initialize()
+    print("Driving")
+    
+    timer.clear()
+    while timer.time(MSEC) < 1500:
+        print(timer.time(MSEC))
+        run_drive_motors(90, 0, 0, True)   # forward
+        wait(100, MSEC)
+    print("nodrive")
     intake_forward_toggle()
-    run_drive_motors(-50,0,0)
-    butt_toggle_fn()
-    wait(1500,MSEC)
+    run_drive_motors(0,20,0)
+    wait(2500,MSEC)
+    run_drive_motors(20,0,0)
     stop_drive()
-
+    intake_forward_toggle()
+    
+    
     #makes angles unreliable
     # for i in range(5):  # repeat 5 times
     #     # rev for x msec
@@ -657,7 +681,6 @@ def user_control():
         # head=gps.heading()
         # print(x,y,head)
         # print(intake.torque(TorqueUnits.NM))
-        print(outake_forward,outake_reverse)
         controller.screen.set_cursor(1, 1)
         controller.screen.print("Score" if reverseDriveToggle else "Gather")
         controller.screen.set_cursor(2, 1)
@@ -671,8 +694,8 @@ def user_control():
         # initialize()
         # print_gps_status()
         
-        print("Pos: (",xc,",",yc,"), HEAD: "+str(gps.heading()))
-        wait(50, MSEC)  # Small delay to prevent CPU overload
+        # print("Pos: (",xc,",",yc,"), HEAD: "+str(gps.heading()))
+        wait(100, MSEC)  # Small delay to prevent CPU overload
 #endregion
 
 # create competition instance
@@ -680,5 +703,6 @@ comp = Competition(user_control, autonomous)
 
 # actions to do when the program starts
 brain.screen.clear_screen()
-user_control()
+autonomous()
+# user_control()
 # autonomous()
