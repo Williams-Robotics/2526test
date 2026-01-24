@@ -604,26 +604,31 @@ brain.screen.print("Use controller to drive")
 #     wait(1500,MSEC)
 #     stop_drive()
 def autonomousgps():
-    gps_goto(894,-1241)
-    gps_gohead(87)
-    tongue_toggle_fn()
-    gps_goto(1363,-1174)
-    intake_forward_toggle()
+    # gps_goto(894,-1241)
+    # gps_gohead(87)
+    # tongue_toggle_fn()
+    # gps_goto(1363,-1174)
+    # intake_forward_toggle()
+    gps_goto(0,-406)
+    gps_gohead(90)
+    gps_goto(1162,-542)
+    gps_gohead(180)
+    gps_goto(1162,-1235)
+    gps_gohead(90)
+    run_drive_motors(-100,0,0)
+    butt_toggle_fn()
+    wait(2000,MSEC)
+    outake_forward_toggle()
+    
 def autonomous():
     initialize()
     print("Driving")
-    
-    timer.clear()
-    while timer.time(MSEC) < 1500:
-        print(timer.time(MSEC))
-        run_drive_motors(90, 0, 0, True)   # forward
-        wait(100, MSEC)
-    print("nodrive")
     intake_forward_toggle()
-    run_drive_motors(0,20,0)
-    wait(2500,MSEC)
-    run_drive_motors(20,0,0)
+    run_drive_motors(60, 0, 0)   # forward
+    wait(3000,MSEC)
+    print("nodrive")
     stop_drive()
+    wait(2500,MSEC)
     intake_forward_toggle()
     
     
@@ -694,7 +699,7 @@ def user_control():
         # initialize()
         # print_gps_status()
         
-        # print("Pos: (",xc,",",yc,"), HEAD: "+str(gps.heading()))
+        print("Pos: (",xc,",",yc,"), HEAD: "+str(gps.heading()))
         wait(100, MSEC)  # Small delay to prevent CPU overload
 #endregion
 
@@ -703,6 +708,5 @@ comp = Competition(user_control, autonomous)
 
 # actions to do when the program starts
 brain.screen.clear_screen()
-autonomous()
 # user_control()
 # autonomous()
