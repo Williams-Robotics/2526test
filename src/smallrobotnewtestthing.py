@@ -136,9 +136,13 @@ def tongue_toggle_fn():
 def wing_toggle_fn():
     global wing_toggle
     wing_toggle = not wing_toggle
-    if wing_toggle:wing.spin_to_position(-90, DEGREES)
-    else:wing.spin_to_position(0, DEGREES)
-    
+    if wing_toggle:
+        while timer.time(MSEC) < 3000:
+            wing.spin(FORWARD, 100, PERCENT)
+    else:
+        while timer.time(MSEC) < 3000:
+            wing.spin_for(REVERSE, 100, PERCENT)
+     
 def rev_drive_toggle_fn():
     global reverseDriveToggle
     reverseDriveToggle = not reverseDriveToggle
@@ -168,7 +172,7 @@ controller.buttonR2.pressed(outake_reverse_toggle)
 
 reverseDriveToggle=False
 
-controller.buttonDown.pressed(rev_drive_toggle_fn)
+controller.buttonUp.pressed(rev_drive_toggle_fn)
 strafeToggle = False
 
 #endregion'
@@ -211,7 +215,7 @@ def x_drive_control():
     forward = controller.axis3.position()  # Left stick Y-axis
     strafe = controller.axis4.position() 
     # strafe=0# Left stick X-axis
-    turn = controller.axis1.position()   # Right stick X-axis
+    turn = controller.axis1.position() * 0.8   # Right stick X-axis
     run_drive_motors(forward,strafe,turn)
     
 def run_drive_motors(forward,strafe,turn):
