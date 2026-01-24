@@ -406,9 +406,9 @@ def gps_goto(x,y):
     total_gps_error=0
     # arr_thread=Thread(goto_arr)
     while not arrived:
-        # if gps.quality()<100:
-        #     stop_drive()
-        #     print("NO GPS")
+        if gps.quality()<100:
+            stop_drive()
+            print("NO GPS")
         xc=gps.x_position()
         yc=gps.y_position()
         if bool_margin(xc,yc,x,y):

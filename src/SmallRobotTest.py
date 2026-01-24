@@ -167,7 +167,9 @@ outake_reverse = False
 controller.buttonR2.pressed(outake_reverse_toggle)
 
 reverseDriveToggle=False
+
 controller.buttonDown.pressed(rev_drive_toggle_fn)
+strafeToggle = False
 
 #endregion'
 
@@ -553,7 +555,59 @@ brain.screen.print("Use controller to drive")
 # gps_goto(365,440)
 # wait(3000, MSEC)
 
+#AUTON
 
+# tongue_toggle_fn()
+# while timer.time(MSEC) < 3000:
+#         intake.spin(REVERSE, 100, PERCENT)
+#         run_drive_motors(80, 0, 0)   # forward
+#         wait(10, MSEC)
+
+# screo the blue ones, then grab and spit out red
+
+# for i in range(5):  # repeat 5 times
+#     # back for 1 second
+#     timer.clear()
+#     while timer.time(MSEC) < 1000:
+#         intake.stop()
+#         run_drive_motors(-100, 0, 0)   # forward
+#         wait(10, MSEC)
+
+
+#     while timer.time(MSEC) < 1000:
+#         intake.spin(REVERSE, 100, PERCENT)
+#         run_drive_motors(80, 0, 0)   # forward
+#         wait(10, MSEC)
+
+    
+
+    
+
+    
+
+
+#makes angles unreliable
+# for i in range(5):  # repeat 5 times
+#     # rev for x msec
+#     timer.clear()
+#     while timer.time(MSEC) < 100:
+#         run_drive_motors(-100, 0, 0)   # forward
+#         wait(10, MSEC)
+
+#     stop_drive()
+#     wait(100, MSEC)  # small pause (optional)
+
+#     # fow for x msec
+#     timer.clear()
+#     while timer.time(MSEC) < 200:
+#         run_drive_motors(100, 0, 0)  # backward
+#         wait(10, MSEC)
+
+#     stop_drive()
+#     wait(100, MSEC)  # small pause (optional)
+
+
+ 
 
 xc=gps.x_position()
 yc=gps.y_position()

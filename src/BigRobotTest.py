@@ -231,7 +231,9 @@ def x_drive_control():
     run_drive_motors(forward,strafe,turn)
     
 def run_drive_motors(forward,strafe,turn):
-    if forward==strafe==turn==0:stop_drive()
+    if forward==strafe==turn==0:
+        stop_drive()
+        return
     if not strafeToggle: strafe=0
     if reverseDriveToggle: 
         forward*=-1
@@ -575,7 +577,41 @@ tongue_toggle_fn()
 wait(150,MSEC)
 intake_forward_toggle()
 run_drive_motors(100,0,0)
-wait(500,MSEC)
+for i in range(1):  # repeat 1 times
+    # FORWARD for 1 second
+    timer.clear()
+    while timer.time(MSEC) < 2000:
+        run_drive_motors(100, 0, 0)   # forward
+        wait(10, MSEC)
+
+    stop_drive()
+intake_forward_toggle()
+
+
+#makes angles unreliable
+# for i in range(5):  # repeat 5 times
+#     # rev for x msec
+#     timer.clear()
+#     while timer.time(MSEC) < 100:
+#         run_drive_motors(-100, 0, 0)   # forward
+#         wait(10, MSEC)
+
+#     stop_drive()
+#     wait(100, MSEC)  # small pause (optional)
+
+#     # fow for x msec
+#     timer.clear()
+#     while timer.time(MSEC) < 200:
+#         run_drive_motors(100, 0, 0)  # backward
+#         wait(10, MSEC)
+
+#     stop_drive()
+#     wait(100, MSEC)  # small pause (optional)
+
+
+ 
+
+
 #Drive forward
 #grab 3 Balls
 #drive to goal and drop flap
