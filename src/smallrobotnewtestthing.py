@@ -560,18 +560,18 @@ def autonomous():
 
     # AUTON
 
-    tongue_toggle_fn()
-    while timer.time(MSEC) < 3000:
-            intake.spin(REVERSE, 100, PERCENT)
-            run_drive_motors(80, 0, 0)   # forward
-            wait(10, MSEC)
+    # tongue_toggle_fn()
+    # while timer.time(MSEC) < 3000:
+    #         intake.spin(REVERSE, 100, PERCENT)
+    #         run_drive_motors(80, 0, 0)   # forward
+    #         wait(10, MSEC)
 
-    while timer.time(MSEC) < 1000:
-                intake.spin(REVERSE, 100, PERCENT)
-                run_drive_motors(80, 0, 0)   # forward
-                wait(10, MSEC)
+    # while timer.time(MSEC) < 1000:
+    #             intake.spin(REVERSE, 100, PERCENT)
+    #             run_drive_motors(80, 0, 0)   # forward
+    #             wait(10, MSEC)
 
-    controller.screen.print("Auton Program Done.")
+    # controller.screen.print("Auton Program Done.")
 
     # # screo the blue ones, then grab and spit out red
 
@@ -608,6 +608,7 @@ def autonomous():
 
     #     stop_drive()
     #     wait(100, MSEC)  # small pause (optional)
+    print("s")
 
 def user_control():
     xc=gps.x_position()
@@ -618,14 +619,14 @@ def user_control():
         
         x_drive_control()
         controller.screen.clear_screen()
-        x=gps.x_position()
-        y=gps.y_position()
-        head=gps.heading()
+        # x=gps.x_position()
+        # y=gps.y_position()
+        # head=gps.heading()
         # print(x,y,head)
         controller.screen.set_cursor(1, 1)
-        controller.screen.print(str(x)+", "+str(y))
-        controller.screen.set_cursor(2, 1)
-        controller.screen.print(head)
+        controller.screen.print("Score" if reverseDriveToggle else "Gather")
+        # controller.screen.set_cursor(2, 1)
+        # controller.screen.print(head)
         
         
         # print("heading: "+str(get_gps_avg()))

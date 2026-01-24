@@ -572,28 +572,36 @@ brain.screen.print("Use controller to drive")
 # wait(3000, MSEC)
 
 
-
-
-
-
 def autonomous():
+    initialize()
     brain.screen.clear_screen()
     brain.screen.print("autonomous code")
     #AUTON
-
     tongue_toggle_fn()
-    while timer.time(MSEC) < 3000:
-            intake.spin(REVERSE, 100, PERCENT)
-            run_drive_motors(80, 0, 0)   # forward
-            wait(10, MSEC)
+    butt_toggle_fn()
+    wait(150,MSEC)
+    intake_forward_toggle()
+    timer.clear()
+    while timer.time(MSEC) < 1500:
+        run_drive_motors(-80, 0, 0)   # forward
+        wait(10, MSEC)
+    stop_drive()
+    outake_forward_toggle()
+   
 
-    while timer.time(MSEC) < 1000:
-                intake.spin(REVERSE, 100, PERCENT)
-                run_drive_motors(80, 0, 0)   # forward
-                wait(10, MSEC)
-
-    controller.screen.print("Auton Program Done.")
-
+def autonomous2():
+    tongue_toggle_fn()
+    wait(150,MSEC)
+    intake_forward_toggle()
+    run_drive_motors(100,0,0)
+    wait(3000,MSEC)
+    run_drive_motors(0,0,0)
+    # wait(1500,MSEC)
+    intake_forward_toggle()
+    run_drive_motors(-50,0,0)
+    butt_toggle_fn()
+    wait(1500,MSEC)
+    stop_drive()
 
     #makes angles unreliable
     # for i in range(5):  # repeat 5 times
@@ -634,22 +642,27 @@ def user_control():
     # COMMENT OUT FOR THE ACTUAL
     xc=gps.x_position()
     yc=gps.y_position()
+    global strafeToggle
     while True:
         if controller.buttonY.pressing(): strafeToggle=True
         else:strafeToggle=False
-
+        
         x_drive_control()
+        
+        #Controller Screen
+        
         controller.screen.clear_screen()
-        x=gps.x_position()
-        y=gps.y_position()
-        head=gps.heading()
+        # x=gps.x_position()
+        # y=gps.y_position()
+        # head=gps.heading()
         # print(x,y,head)
         # print(intake.torque(TorqueUnits.NM))
         print(outake_forward,outake_reverse)
         controller.screen.set_cursor(1, 1)
-        controller.screen.print(str(x)+", "+str(y))
+        controller.screen.print("Score" if reverseDriveToggle else "Gather")
         controller.screen.set_cursor(2, 1)
-        controller.screen.print(head)
+        controller.screen.print("Butt Closed" if butt_toggle else "Butt Open")
+
         
         
         # print("heading: "+str(get_gps_avg()))
@@ -658,7 +671,7 @@ def user_control():
         # initialize()
         # print_gps_status()
         
-        # print("Pos: (",xc,",",yc,"), HEAD: "+str(gps.heading()))
+        print("Pos: (",xc,",",yc,"), HEAD: "+str(gps.heading()))
         wait(50, MSEC)  # Small delay to prevent CPU overload
 #endregion
 
@@ -667,4 +680,5 @@ comp = Competition(user_control, autonomous)
 
 # actions to do when the program starts
 brain.screen.clear_screen()
-# user_control()
+user_control()
+# autonomous()
