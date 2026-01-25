@@ -531,7 +531,7 @@ def gps_goto(x,y):
         # elif dis>5:f=2              
         # else:f=1
         f,prev_gps_error,total_gps_error=PID(dis,0,.1,.005,.01,prev_gps_error,total_gps_error)
-        if f>50: f=50
+        if f>35: f=35
         run_drive_motors(f,0,0)
         print("Pos: (",xc,",",yc,"), HEAD: "+str(gps.heading()) +"Counter: "+str(counter)+"f: "+str(f))
         
@@ -603,24 +603,35 @@ brain.screen.print("Use controller to drive")
 #     butt_toggle_fn()
 #     wait(1500,MSEC)
 #     stop_drive()
-def autonomousgps():
+def autonomous():
     # gps_goto(894,-1241)
     # gps_gohead(87)
     # tongue_toggle_fn()
     # gps_goto(1363,-1174)
     # intake_forward_toggle()
-    gps_goto(0,-406)
-    gps_gohead(90)
-    gps_goto(1162,-542)
-    gps_gohead(180)
+    # gps_goto(0,406)
+    # gps_gohead(270)
+    # gps_goto(-1162,542)
+    # gps_gohead(0)
     gps_goto(1162,-1235)
     gps_gohead(90)
-    run_drive_motors(-100,0,0)
+    intake_forward_toggle()
     butt_toggle_fn()
+    run_drive_motors(-50,0,0)
     wait(2000,MSEC)
     outake_forward_toggle()
+    wait(5000,MSEC)
+    run_drive_motors(50,0,0)
+    outake_forward_toggle()
+    tongue_toggle_fn()
+    wait(3000,MSEC)
+    run_drive_motors(-50,0,0)
+    outake_forward_toggle()
+    wait(5000,MSEC)
     
-def autonomous():
+    
+    
+def autonomou():
     initialize()
     print("Driving")
     intake_forward_toggle()
