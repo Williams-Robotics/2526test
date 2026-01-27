@@ -137,11 +137,13 @@ def wing_toggle_fn():
     global wing_toggle
     wing_toggle = not wing_toggle
     if wing_toggle:
-        while timer.time(MSEC) < 3000:
-            wing.spin(FORWARD, 100, PERCENT)
+        # Wing DOWN
+        wing.spin_for(REVERSE, 300, MSEC, 80, PERCENT)
+        print("wing down")
     else:
-        while timer.time(MSEC) < 3000:
-            wing.spin_for(REVERSE, 100, PERCENT)
+        # Wing UP / retract
+        wing.spin_for(FORWARD, 350 , MSEC, 80, PERCENT)
+        print("wing up")
      
 def rev_drive_toggle_fn():
     global reverseDriveToggle
@@ -224,7 +226,7 @@ def run_drive_motors(forward,strafe,turn):
     if reverseDriveToggle: 
         forward*=-1
         strafe*=-1
-    # turn=newgps_heading_control(turn)
+    turn=newgps_heading_control(turn)
        
     # Calculate motor speeds for X-drive kinematics
     # X-drive formula accounts for diagonal motor placement
