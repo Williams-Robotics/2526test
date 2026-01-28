@@ -136,14 +136,38 @@ def tongue_toggle_fn():
 def wing_toggle_fn():
     global wing_toggle
     wing_toggle = not wing_toggle
+
     if wing_toggle:
-        # Wing DOWN
-        wing.spin_for(REVERSE, 300, MSEC, 80, PERCENT)
-        print("wing down")
-    else:
-        # Wing UP / retract
-        wing.spin_for(FORWARD, 350 , MSEC, 80, PERCENT)
+        wing.spin_for(REVERSE, 280, MSEC, 80, PERCENT)
         print("wing up")
+    else:
+        wing.spin_for(FORWARD, 240, MSEC, 80, PERCENT)
+        print("wing down")
+    
+    # global med_state
+    # if wing_toggle == False and med_state == False:
+    #     # Wing UP
+    #     med_state = True
+    #     wing_toggle = True
+    #     wing.spin_for(REVERSE, 200, MSEC, 80, PERCENT)
+    #     print("wing med")
+    # elif wing_toggle == True and med_state ==True:
+    #     med_state = False
+    #     wing_toggle = True
+    #     wing.spin_for(REVERSE,100, MSEC, 80, PERCENT)
+    #     print("wing highest position")
+    # elif wing_toggle == True and med_state == False:
+    #     med_state = True
+    #     wing_toggle = False
+    #     wing.spin_for(FORWARD, 100, MSEC, 80, PERCENT)
+    #     print("wing highest position")
+
+    # else:
+    #     # Wing DOWN
+    #     wing_toggle = False
+    #     med_state = False
+    #     wing.spin_for(FORWARD, 200 , MSEC, 80, PERCENT)
+    #     print("wing down")
      
 def rev_drive_toggle_fn():
     global reverseDriveToggle
@@ -155,6 +179,7 @@ tongue_toggle = False
 controller.buttonA.pressed(tongue_toggle_fn)
 
 wing_toggle = False
+med_state = False
 controller.buttonB.pressed(wing_toggle_fn)
 
 # outake_toggle = False
@@ -217,7 +242,7 @@ def x_drive_control():
     forward = controller.axis3.position()  # Left stick Y-axis
     strafe = controller.axis4.position() 
     # strafe=0# Left stick X-axis
-    turn = controller.axis1.position() * 0.8   # Right stick X-axis
+    turn = controller.axis1.position() * 0.6   # Right stick X-axis
     run_drive_motors(forward,strafe,turn)
     
 def run_drive_motors(forward,strafe,turn):
@@ -617,6 +642,7 @@ def autonomous():
     print("s")
 
 def user_control():
+    global strafeToggle
     xc=gps.x_position()
     yc=gps.y_position()
     while True:
