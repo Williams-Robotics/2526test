@@ -217,7 +217,7 @@ last_head=999
 getH=False
 prev_head_error=0
 total_head_error=0
-def x_drive_control():
+def x_drive_control(ignore=False):
     """
     Control the X-drive using controller joysticks.
     Left joystick: Forward/backward and strafing
@@ -227,19 +227,22 @@ def x_drive_control():
     forward = controller.axis3.position()  # Left stick Y-axis
     strafe = controller.axis4.position() 
     # strafe=0# Left stick X-axis
-    turn = controller.axis1.position()    # Right stick X-axis
-    run_drive_motors(forward,strafe,turn)
+    turn_val = controller.axis1.position() 
+    turn=.75*turn_val if turn_val<50 else 39.4*math.exp(.019*(turn_val-50))-1.9# Right stick X-axis
+    # print("val: "+str(turn_val)+"turn: "+str(turn))
+    run_drive_motors(forward,strafe,turn,ignore)
     
 def run_drive_motors(forward,strafe,turn, ignore=False):
+    
+
     if forward==strafe==turn==0:
         stop_drive()
-        print("ESTOP")
         return
     if not strafeToggle: strafe=0
     if reverseDriveToggle: 
         forward*=-1
         strafe*=-1
-    if not ignore: turn=newgps_heading_control(turn)
+    # if not ignore: turn=newgps_heading_control(turn)
        
     # Calculate motor speeds for X-drive kinematics
     # X-drive formula accounts for diagonal motor placement
@@ -268,7 +271,7 @@ def newgps_heading_control(turn):
     
     #When Done turning, get heading
     elif turn==0 and not getH:
-        if abs(gps.gyro_rate(AxisType.XAXIS))<1:
+        if abs(gps.gyro_rate(AxisType.XAXIS))<.5:
             goal_head=(gps.orientation(OrientationType.YAW))
             getH=True
             print("got: "+str(gps.gyro_rate(AxisType.XAXIS)))
@@ -286,7 +289,7 @@ def newgps_heading_control(turn):
         elif heading_error < -180:
             heading_error += 360
 
-        turn,prev_head_error,total_head_error=PID(0,-heading_error,.8,0,0.15,prev_head_error,total_head_error)  #THIS IS PID! please tune the values, the .25 is just from what i used before. 
+        turn,prev_head_error,total_head_error=PID(0,-heading_error,.75,.01,0.15,prev_head_error,total_head_error)  #THIS IS PID! please tune the values, the .25 is just from what i used before. 
         if turn>50: turn=50
         elif turn < -50:
             turn = -50
@@ -687,7 +690,7 @@ def user_control():
         if controller.buttonY.pressing(): strafeToggle=True
         else:strafeToggle=False
         
-        x_drive_control()
+        x_drive_control(False)
         
         #Controller Screen
         
@@ -710,7 +713,7 @@ def user_control():
         # initialize()
         # print_gps_status()
         
-        print("Pos: (",xc,",",yc,"), HEAD: "+str(gps.heading()))
+        # print("Pos: (",xc,",",yc,"), HEAD: "+str(gps.heading()))
         wait(100, MSEC)  # Small delay to prevent CPU overload
 #endregion
 

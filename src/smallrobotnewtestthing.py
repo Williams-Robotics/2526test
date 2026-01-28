@@ -242,7 +242,8 @@ def x_drive_control():
     forward = controller.axis3.position()  # Left stick Y-axis
     strafe = controller.axis4.position() 
     # strafe=0# Left stick X-axis
-    turn = controller.axis1.position() * 0.6   # Right stick X-axis
+    turn_val = controller.axis1.position() 
+    turn=.75*turn_val if turn_val<50 else 39.4*math.exp(.019*(turn_val-50))-1.9# Right stick X-axis
     run_drive_motors(forward,strafe,turn)
     
 def run_drive_motors(forward,strafe,turn):
