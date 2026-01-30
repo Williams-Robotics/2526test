@@ -271,10 +271,11 @@ def newgps_heading_control(turn):
     
     #When Done turning, get heading
     elif turn==0 and not getH:
-        if abs(gps.gyro_rate(AxisType.XAXIS))<.5:
+        if abs(gps.gyro_rate(AxisType.XAXIS))<2000:
             goal_head=(gps.orientation(OrientationType.YAW))
             getH=True
             print("got: "+str(gps.gyro_rate(AxisType.XAXIS)))
+        else: print("BAD: "+str(gps.gyro_rate(AxisType.XAXIS)))
         # timer.event(get_heading,500)
         return turn
         
@@ -289,7 +290,7 @@ def newgps_heading_control(turn):
         elif heading_error < -180:
             heading_error += 360
 
-        turn,prev_head_error,total_head_error=PID(0,-heading_error,.75,.01,0.15,prev_head_error,total_head_error)  #THIS IS PID! please tune the values, the .25 is just from what i used before. 
+        turn,prev_head_error,total_head_error=PID(0,-heading_error,.9,.1,0.5,prev_head_error,total_head_error)  #THIS IS PID! please tune the values, the .25 is just from what i used before. 
         if turn>50: turn=50
         elif turn < -50:
             turn = -50
