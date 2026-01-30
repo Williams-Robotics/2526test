@@ -111,7 +111,7 @@ def outake_forward_toggle():
             outake_reverse = False
             outake_forward=True
             outake.stop(HOLD)
-            outake.spin(FORWARD, 100, PERCENT)
+            outake.spin(FORWARD, 65, PERCENT)
 
 def outake_reverse_toggle():
     global outake_reverse, outake_forward
@@ -124,7 +124,7 @@ def outake_reverse_toggle():
             outake_forward = False
             outake_reverse=True
             outake.stop(HOLD)
-            outake.spin(REVERSE, 100, PERCENT)
+            outake.spin(REVERSE, 65, PERCENT)
             # outake.stop(HOLD)
         # Spou both motors ou reverse outake direction concurrently
 
@@ -299,7 +299,7 @@ def newgps_heading_control(turn):
         elif heading_error < -180:
             heading_error += 360
 
-        turn,prev_head_error,total_head_error=PID(0,-heading_error,.8,0,0.15,prev_head_error,total_head_error)  #THIS IS PID! please tune the values, the .25 is just from what i used before. 
+        turn,prev_head_error,total_head_error=PID(0,-heading_error,1.2,0,0.1,prev_head_error,total_head_error)  #THIS IS PID! please tune the values, the .25 is just from what i used before. 
         if turn>50: turn=50
         elif turn < -50:
             turn = -50
