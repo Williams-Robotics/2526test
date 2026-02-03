@@ -233,8 +233,6 @@ def x_drive_control(ignore=False):
     run_drive_motors(forward,strafe,turn,ignore)
     
 def run_drive_motors(forward,strafe,turn, ignore=False):
-    
-
     if forward==strafe==turn==0:
         stop_drive()
         return
@@ -257,6 +255,11 @@ def run_drive_motors(forward,strafe,turn, ignore=False):
     back_left.spin(FORWARD, back_left_speed, PERCENT)
     back_right.spin(FORWARD, back_right_speed, PERCENT)
 #Gets the heading of the robot after a slight delay, so it gets the heading when it is stopped
+def activate_heading():
+    global getH
+    global goal_head
+    goal_head=(gps.orientation(OrientationType.YAW))
+    getH=True
 def newgps_heading_control(turn):
     global goal_head
     global getH
@@ -272,8 +275,7 @@ def newgps_heading_control(turn):
     #When Done turning, get heading
     elif turn==0 and not getH:
         if abs(gps.gyro_rate(AxisType.XAXIS))<2000:
-            goal_head=(gps.orientation(OrientationType.YAW))
-            getH=True
+            timer.event(activate_heading,100)
             print("got: "+str(gps.gyro_rate(AxisType.XAXIS)))
         else: print("BAD: "+str(gps.gyro_rate(AxisType.XAXIS)))
         # timer.event(get_heading,500)
@@ -290,54 +292,18 @@ def newgps_heading_control(turn):
         elif heading_error < -180:
             heading_error += 360
 
-        turn,prev_head_error,total_head_error=PID(0,-heading_error,.9,.1,0.5,prev_head_error,total_head_error)  #THIS IS PID! please tune the values, the .25 is just from what i used before. 
+        turn,prev_head_error,total_head_error=PID(0,-heading_error,.7,.15,0.5,prev_head_error,total_head_error)  #THIS IS PID! please tune the values, the .25 is just from what i used before. 
         if turn>50: turn=50
         elif turn < -50:
             turn = -50
-        print("chead: "+str(chead)+"-goal: "+str(goal_head))
+        # print("chead: "+str(chead)+"-goal: "+str(goal_head))
         return turn
 
     else: 
         print("Unexpexted Issue With Heading Control")
         return turn
     
-def gps_heading_control(turn):
-    global goal_head
-    global getH
-    global prev_head_error
-    global total_head_error
-    #When Turning
-    if turn!=0:
-        getH=False
-        # reset_gps_avg()
-        prev_head_error=0
-        total_head_error=0
-        print("Clear")
-        return turn
-    
-    #When Done turning, get heading
-    elif turn==0 and not getH:
-        if abs(int.gyro_rate(AxisType.XAXIS))<1:
-            goal_head=(gps.heading()-180)
-            getH=True
-            print("got: "+str(int.gyro_rate(AxisType.XAXIS)))
-        # timer.event(get_heading,500)
-        return turn
-        
-    #runs the heading correction after it has the heading, which also means it only kicks in for longer drives
-    elif turn==0 and getH and (abs(goal_head-gps.heading()))>2:
-        chead=gps.heading()
-        chead-=180
-        turn=(goal_head-chead)/4 
 
-        # turn,prev_head_error,total_head_error=PID(goal_head,chead,.4,.1,0,prev_head_error,total_head_error)  #THIS IS PID! please tune the values, the .25 is just from what i used before. 
-        if turn>30: turn=30
-        print("chead: "+str(chead)+"-goal: "+str(goal_head))
-        return turn
-
-    else: 
-        print("Unexpexted Issue With Heading Control")
-        return turn
   
 def stop_drive():
     """Stop all drive motors."""
@@ -441,7 +407,7 @@ def int_margin(x,y,tx,ty):
     mx=abs(x-tx)
     my=abs(y-ty)
     return math.sqrt(mx**2+my**2)
-def gps_gohead(heading):
+def gps_gohead_old(heading):
     arrived=False
     c1=False
     turn=0
@@ -480,7 +446,41 @@ def gps_gohead(heading):
                 else:turn=-3
             run_drive_motors(0,0,turn)
             wait(5, MSEC)
-    print("arrived")        
+    print("arrived")
+def gps_gohead(heading):
+    if reverseDriveToggle: 
+        heading+=180
+    arrived=False
+    c1=False
+    turn,prev_head_error,total_head_error=0,0,0
+    while not arrived:
+        if gps.quality()<90: continue
+        head=gps.heading()
+        diff=heading-head
+        while diff<-180:diff+=360
+        while diff>180:diff-=360
+        print("diff is" +str(diff)+"and head is"+str(head))
+        if abs(diff)<1:
+            stop_drive()
+            if c1:
+                arrived=True 
+            c1=True
+            continue 
+        else:
+            c1=False 
+            if (diff>0 and diff<180):
+                turn,prev_head_error,total_head_error=PID(0,diff,.6,.0001,0.1,prev_head_error,total_head_error)  
+                turn*=-1 
+                # print("turnR: {}".format(turn))
+                        
+            else:
+                turn,prev_head_error,total_head_error=PID(0,diff,.6,.0001,0.1,prev_head_error,total_head_error)
+                turn*=-1 
+                # print("turnL: {}".format(turn))
+                
+            run_drive_motors(0,0,turn)
+            wait(5, MSEC)
+    print("arrived")                
 def goto_arr():
     global arrived
     while not arrived:
@@ -494,7 +494,7 @@ def gps_goto(x,y):
     goalx=x
     goaly=y
     arrived=False
-    counter=2000
+    counter=3000
     heading_set=False
     prev_gps_error=0
     total_gps_error=0
@@ -509,7 +509,7 @@ def gps_goto(x,y):
             arrived=True
             stop_drive()
             continue
-        if counter%2000==0 and int_margin(xc,yc,x,y)>150:
+        if counter%3000==0 and int_margin(xc,yc,x,y)>150:
             counter=0
             mx=x-xc
             my=y-yc
@@ -536,7 +536,9 @@ def gps_goto(x,y):
         # else:f=1
         f,prev_gps_error,total_gps_error=PID(dis,0,.1,.005,.01,prev_gps_error,total_gps_error)
         if f>35: f=35
-        run_drive_motors(f,0,0)
+        # if reverseDriveToggle: 
+        #     f*=-1
+        run_drive_motors(f,0,0,True)
         print("Pos: (",xc,",",yc,"), HEAD: "+str(gps.heading()) +"Counter: "+str(counter)+"f: "+str(f))
         
         # wait(100, MSEC)
@@ -607,7 +609,7 @@ brain.screen.print("Use controller to drive")
 #     butt_toggle_fn()
 #     wait(1500,MSEC)
 #     stop_drive()
-def autonomous():
+def autonomous_v1():
     # gps_goto(894,-1241)
     # gps_gohead(87)
     # tongue_toggle_fn()
@@ -633,7 +635,52 @@ def autonomous():
     outake_forward_toggle()
     wait(5000,MSEC)
     
+def autonomous_v2():
+    initialize()
+      
+    #goto spot 
+    gps_goto(-1250,-1250)
+    gps_gohead(270)
     
+    #grab balls
+    print("grab balls")
+    intake_forward_toggle()
+    tongue_toggle_fn()
+    wait(100,MSEC)
+    run_drive_motors(100,0,0)
+    wait(1000,MSEC)
+    print("Stoop moter")
+    run_drive_motors(0,0,0)
+    wait(1000,MSEC)
+    
+    #go to drop spot
+    print("godrop")
+    butt_toggle_fn()
+    print("f1")
+    tongue_toggle_fn()
+    print("f2")
+    rev_drive_toggle_fn()
+    print("greoooo")
+    run_drive_motors(-50,0,0)
+    wait(50,MSEC)
+    gps_goto(-100,-1250)
+    print("grat")   
+    gps_gohead(90)
+    run_drive_motors(-50,0,0)
+    wait(2000,MSEC)
+    
+    #drop balls
+    print("drop")
+    outake_forward_toggle()
+    wait(5000,MSEC)
+    
+    '''run_drive_motors(50,0,0)
+    outake_forward_toggle()
+    tongue_toggle_fn()
+    wait(3000,MSEC)
+    run_drive_motors(-50,0,0)
+    outake_forward_toggle()
+    wait(5000,MSEC)'''
     
 def autonomou():
     initialize()
@@ -684,10 +731,18 @@ def autonomou():
 
 def user_control():
     # COMMENT OUT FOR THE ACTUAL
-    xc=gps.x_position()
-    yc=gps.y_position()
+    
     global strafeToggle
     while True:
+        # gps_gohead(90)
+        # wait(500,MSEC)
+        # gps_gohead(190)
+        # wait(500,MSEC)
+        # gps_gohead(180)
+        # wait(500,MSEC)
+    
+        xc=gps.x_position()
+        yc=gps.y_position()
         if controller.buttonY.pressing(): strafeToggle=True
         else:strafeToggle=False
         
@@ -714,12 +769,12 @@ def user_control():
         # initialize()
         # print_gps_status()
         
-        # print("Pos: (",xc,",",yc,"), HEAD: "+str(gps.heading()))
+        print("Pos: (",xc,",",yc,"), HEAD: "+str(gps.heading()))
         wait(100, MSEC)  # Small delay to prevent CPU overload
 #endregion
 
 # create competition instance
-comp = Competition(user_control, autonomous)
+comp = Competition(user_control, autonomous_v2)
 
 # actions to do when the program starts
 brain.screen.clear_screen()

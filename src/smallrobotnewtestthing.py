@@ -232,7 +232,7 @@ last_head=999
 getH=False
 prev_head_error=0
 total_head_error=0
-def x_drive_control():
+def x_drive_control(ignore=False):
     """
     Control the X-drive using controller joysticks.
     Left joystick: Forward/backward and strafing
@@ -244,15 +244,17 @@ def x_drive_control():
     # strafe=0# Left stick X-axis
     turn_val = controller.axis1.position() 
     turn=.75*turn_val if turn_val<50 else 39.4*math.exp(.019*(turn_val-50))-1.9# Right stick X-axis
-    run_drive_motors(forward,strafe,turn)
+    run_drive_motors(forward,strafe,turn,ignore)
     
-def run_drive_motors(forward,strafe,turn):
-    if forward==strafe==turn==0:stop_drive()
+def run_drive_motors(forward,strafe,turn, ignore=False):
+    if forward==strafe==turn==0:
+        stop_drive()
+        return
     if not strafeToggle: strafe=0
     if reverseDriveToggle: 
         forward*=-1
         strafe*=-1
-    turn=newgps_heading_control(turn)
+    if not ignore: turn=newgps_heading_control(turn)
        
     # Calculate motor speeds for X-drive kinematics
     # X-drive formula accounts for diagonal motor placement
@@ -267,6 +269,11 @@ def run_drive_motors(forward,strafe,turn):
     back_left.spin(FORWARD, back_left_speed, PERCENT)
     back_right.spin(FORWARD, back_right_speed, PERCENT)
 #Gets the heading of the robot after a slight delay, so it gets the heading when it is stopped
+def activate_heading():
+    global getH
+    global goal_head
+    goal_head=(gps.orientation(OrientationType.YAW))
+    getH=True
 def newgps_heading_control(turn):
     global goal_head
     global getH
@@ -281,10 +288,10 @@ def newgps_heading_control(turn):
     
     #When Done turning, get heading
     elif turn==0 and not getH:
-        if abs(gps.gyro_rate(AxisType.XAXIS))<1:
-            goal_head=(gps.orientation(OrientationType.YAW))
-            getH=True
+        if abs(gps.gyro_rate(AxisType.XAXIS))<2000:
+            timer.event(activate_heading,100)
             print("got: "+str(gps.gyro_rate(AxisType.XAXIS)))
+        else: print("BAD: "+str(gps.gyro_rate(AxisType.XAXIS)))
         # timer.event(get_heading,500)
         return turn
         
@@ -299,55 +306,17 @@ def newgps_heading_control(turn):
         elif heading_error < -180:
             heading_error += 360
 
-        turn,prev_head_error,total_head_error=PID(0,-heading_error,1.2,0,0.1,prev_head_error,total_head_error)  #THIS IS PID! please tune the values, the .25 is just from what i used before. 
+        turn,prev_head_error,total_head_error=PID(0,-heading_error,.7,.15,0.5,prev_head_error,total_head_error)  #THIS IS PID! please tune the values, the .25 is just from what i used before. 
         if turn>50: turn=50
         elif turn < -50:
             turn = -50
-        print("chead: "+str(chead)+"-goal: "+str(goal_head))
+        # print("chead: "+str(chead)+"-goal: "+str(goal_head))
         return turn
 
     else: 
         print("Unexpexted Issue With Heading Control")
         return turn
-    
-def gps_heading_control(turn):
-    global goal_head
-    global getH
-    global prev_head_error
-    global total_head_error
-    #When Turning
-    if turn!=0:
-        getH=False
-        # reset_gps_avg()
-        prev_head_error=0
-        total_head_error=0
-        print("Clear")
-        return turn
-    
-    #When Done turning, get heading
-    elif turn==0 and not getH:
-        if abs(int.gyro_rate(AxisType.XAXIS))<1:
-            goal_head=(gps.heading()-180)
-            getH=True
-            print("got: "+str(int.gyro_rate(AxisType.XAXIS)))
-        # timer.event(get_heading,500)
-        return turn
-        
-    #runs the heading correction after it has the heading, which also means it only kicks in for longer drives
-    elif turn==0 and getH and (abs(goal_head-gps.heading()))>2:
-        chead=gps.heading()
-        chead-=180
-        turn=(goal_head-chead)/4 
-
-        # turn,prev_head_error,total_head_error=PID(goal_head,chead,.4,.1,0,prev_head_error,total_head_error)  #THIS IS PID! please tune the values, the .25 is just from what i used before. 
-        if turn>30: turn=30
-        print("chead: "+str(chead)+"-goal: "+str(goal_head))
-        return turn
-
-    else: 
-        print("Unexpexted Issue With Heading Control")
-        return turn
-  
+ 
 def stop_drive():
     """Stop all drive motors."""
     front_left.stop()
