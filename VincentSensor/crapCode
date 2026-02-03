@@ -148,3 +148,80 @@ def reset_gps_avg():
             wait(100, MSEC)
     print("arrived")               
 #endregion
+
+def gps_heading_control(turn):
+    global goal_head
+    global getH
+    global prev_head_error
+    global total_head_error
+    #When Turning
+    if turn!=0:
+        getH=False
+        # reset_gps_avg()
+        prev_head_error=0
+        total_head_error=0
+        print("Clear")
+        return turn
+    
+    #When Done turning, get heading
+    elif turn==0 and not getH:
+        if abs(int.gyro_rate(AxisType.XAXIS))<1:
+            goal_head=(gps.heading()-180)
+            getH=True
+            print("got: "+str(int.gyro_rate(AxisType.XAXIS)))
+        # timer.event(get_heading,500)
+        return turn
+        
+    #runs the heading correction after it has the heading, which also means it only kicks in for longer drives
+    elif turn==0 and getH and (abs(goal_head-gps.heading()))>2:
+        chead=gps.heading()
+        chead-=180
+        turn=(goal_head-chead)/4 
+
+        # turn,prev_head_error,total_head_error=PID(goal_head,chead,.4,.1,0,prev_head_error,total_head_error)  #THIS IS PID! please tune the values, the .25 is just from what i used before. 
+        if turn>30: turn=30
+        print("chead: "+str(chead)+"-goal: "+str(goal_head))
+        return turn
+
+    else: 
+        print("Unexpexted Issue With Heading Control")
+        return turn
+    
+    
+    def gps_heading_control(turn):
+    global goal_head
+    global getH
+    global prev_head_error
+    global total_head_error
+    #When Turning
+    if turn!=0:
+        getH=False
+        # reset_gps_avg()
+        prev_head_error=0
+        total_head_error=0
+        print("Clear")
+        return turn
+    
+    #When Done turning, get heading
+    elif turn==0 and not getH:
+        if abs(int.gyro_rate(AxisType.XAXIS))<1:
+            goal_head=(gps.heading()-180)
+            getH=True
+            print("got: "+str(int.gyro_rate(AxisType.XAXIS)))
+        # timer.event(get_heading,500)
+        return turn
+        
+    #runs the heading correction after it has the heading, which also means it only kicks in for longer drives
+    elif turn==0 and getH and (abs(goal_head-gps.heading()))>2:
+        chead=gps.heading()
+        chead-=180
+        turn=(goal_head-chead)/4 
+
+        # turn,prev_head_error,total_head_error=PID(goal_head,chead,.4,.1,0,prev_head_error,total_head_error)  #THIS IS PID! please tune the values, the .25 is just from what i used before. 
+        if turn>30: turn=30
+        print("chead: "+str(chead)+"-goal: "+str(goal_head))
+        return turn
+
+    else: 
+        print("Unexpexted Issue With Heading Control")
+        return turn

@@ -6,6 +6,7 @@
 # 	Description:  V5 X-Drive Control & 2026 Code                               #
 #                                                                              #
 # ---------------------------------------------------------------------------- #
+
 '''
 Controls: 
 
@@ -18,6 +19,7 @@ B: Toggle Wing
 X: Toggle Butt(Big Robot Only)
 Y: Hold to enable strafing with left stick
 '''
+
 #region Setup
 # Library imports
 from vex import *
@@ -29,13 +31,14 @@ import math
 #endregion
 #region ==================== MOTOR & PNEUMATICS CONFIGURATION ====================
 # Configure your motor ports here
-FRONT_LEFT_PORT = Ports.PORT5
-FRONT_RIGHT_PORT = Ports.PORT2
-BACK_LEFT_PORT = Ports.PORT3
-BACK_RIGHT_PORT = Ports.PORT4
-INTAKE_PORT=Ports.PORT9
-OUTAKE_PORT=Ports.PORT1
-WING_PORT=Ports.PORT20
+FRONT_LEFT_PORT = Ports.PORT10
+FRONT_RIGHT_PORT = Ports.PORT20
+BACK_LEFT_PORT = Ports.PORT1
+BACK_RIGHT_PORT = Ports.PORT11
+INTAKE_PORT1=Ports.PORT3
+INTAKE_PORT2=Ports.PORT5
+OUTAKE_PORT=Ports.PORT4
+BUTT_PORT=Ports.PORT14
 
 
 
@@ -46,12 +49,14 @@ BACK_LEFT_REVERSE = False
 BACK_RIGHT_REVERSE = True
 INTAKE_REVERSE = False
 OUTAKE_REVERSE = True
-WING_REVERSE=False
+BUTT_REVERSE=False
+
+strafeToggle=False
 #endregion
 #region ==================== SENSOR CONFIGURATION ====================
 AI_PORT=Ports.PORT13
 D_PORT=Ports.PORT15
-GPS_PORT=Ports.PORT10
+GPS_PORT=Ports.PORT9
 INT_PORT=Ports.PORT21
 #endregion
 #region ==================== DRIVE MOTOR INITIALIZATION ====================
@@ -63,10 +68,13 @@ back_right = Motor(BACK_RIGHT_PORT, GearSetting.RATIO_18_1, BACK_RIGHT_REVERSE)
 gps=Gps(GPS_PORT,0,0)
 #endregion
 #region ==================== INTAKE FUNCTIONS ====================
-intake  = Motor(INTAKE_PORT, GearSetting.RATIO_18_1, INTAKE_REVERSE)
-wing  = Motor(WING_PORT, GearSetting.RATIO_36_1, WING_REVERSE)
+intake1  = Motor(INTAKE_PORT1, GearSetting.RATIO_18_1, INTAKE_REVERSE)
+intake2  = Motor(INTAKE_PORT2, GearSetting.RATIO_18_1, not INTAKE_REVERSE)
+intake=MotorGroup(intake1,intake2)
 outake = Motor(OUTAKE_PORT, GearSetting.RATIO_18_1, OUTAKE_REVERSE)
+butt=Motor(BUTT_PORT,GearSetting.RATIO_36_1,BUTT_REVERSE)
 tongue_control=Pneumatics(brain.three_wire_port.h)
+wing_control=Pneumatics(brain.three_wire_port.g)
 
 
 #right and left relative to viewing from the front
@@ -111,7 +119,7 @@ def outake_forward_toggle():
             outake_reverse = False
             outake_forward=True
             outake.stop(HOLD)
-            outake.spin(FORWARD, 65, PERCENT)
+            outake.spin(FORWARD, 100, PERCENT)
 
 def outake_reverse_toggle():
     global outake_reverse, outake_forward
@@ -124,7 +132,7 @@ def outake_reverse_toggle():
             outake_forward = False
             outake_reverse=True
             outake.stop(HOLD)
-            outake.spin(REVERSE, 65, PERCENT)
+            outake.spin(REVERSE, 100, PERCENT)
             # outake.stop(HOLD)
         # Spou both motors ou reverse outake direction concurrently
 
@@ -136,50 +144,23 @@ def tongue_toggle_fn():
 def wing_toggle_fn():
     global wing_toggle
     wing_toggle = not wing_toggle
-
-    if wing_toggle:
-        wing.spin_for(REVERSE, 280, MSEC, 80, PERCENT)
-        print("wing up")
-    else:
-        wing.spin_for(FORWARD, 240, MSEC, 80, PERCENT)
-        print("wing down")
+    if wing_toggle:wing_control.open()
+    else:wing_control.close()
+def butt_toggle_fn():
+    global butt_toggle
+    butt_toggle = not butt_toggle
+    if butt_toggle:butt.spin_to_position(0,DEGREES)
+    else:butt.spin_to_position(-180,DEGREES)
     
-    # global med_state
-    # if wing_toggle == False and med_state == False:
-    #     # Wing UP
-    #     med_state = True
-    #     wing_toggle = True
-    #     wing.spin_for(REVERSE, 200, MSEC, 80, PERCENT)
-    #     print("wing med")
-    # elif wing_toggle == True and med_state ==True:
-    #     med_state = False
-    #     wing_toggle = True
-    #     wing.spin_for(REVERSE,100, MSEC, 80, PERCENT)
-    #     print("wing highest position")
-    # elif wing_toggle == True and med_state == False:
-    #     med_state = True
-    #     wing_toggle = False
-    #     wing.spin_for(FORWARD, 100, MSEC, 80, PERCENT)
-    #     print("wing highest position")
-
-    # else:
-    #     # Wing DOWN
-    #     wing_toggle = False
-    #     med_state = False
-    #     wing.spin_for(FORWARD, 200 , MSEC, 80, PERCENT)
-    #     print("wing down")
-     
 def rev_drive_toggle_fn():
     global reverseDriveToggle
     reverseDriveToggle = not reverseDriveToggle
-
 
 
 tongue_toggle = False
 controller.buttonA.pressed(tongue_toggle_fn)
 
 wing_toggle = False
-med_state = False
 controller.buttonB.pressed(wing_toggle_fn)
 
 # outake_toggle = False
@@ -197,10 +178,14 @@ controller.buttonR1.pressed(outake_forward_toggle)
 outake_reverse = False
 controller.buttonR2.pressed(outake_reverse_toggle)
 
-reverseDriveToggle=False
+butt_toggle=True
+controller.buttonX.pressed(butt_toggle_fn)
 
-controller.buttonUp.pressed(rev_drive_toggle_fn)
-strafeToggle = False
+reverseDriveToggle=False
+controller.buttonDown.pressed(rev_drive_toggle_fn)
+
+
+
 
 #endregion'
 
@@ -243,7 +228,12 @@ def x_drive_control(ignore=False):
     strafe = controller.axis4.position() 
     # strafe=0# Left stick X-axis
     turn_val = controller.axis1.position() 
-    turn=.75*turn_val if turn_val<50 else 39.4*math.exp(.019*(turn_val-50))-1.9# Right stick X-axis
+    if abs(turn_val)<10:turn=2*abs(turn_val)
+    elif abs(turn_val)<60: turn=.006*((abs(turn_val)-10)**2)+20
+    else: turn=40+((60/(math.exp(2)-1))*(math.exp(.05*(abs(turn_val)-60))-1))
+    if turn_val<0: turn*=-1
+    # turn=.75*turn_val if turn_val<50 else 39.4*math.exp(.019*(turn_val-50))-1.9# Right stick X-axis
+    # print("val: "+str(turn_val)+"turn: "+str(turn))
     run_drive_motors(forward,strafe,turn,ignore)
     
 def run_drive_motors(forward,strafe,turn, ignore=False):
@@ -316,13 +306,15 @@ def newgps_heading_control(turn):
     else: 
         print("Unexpexted Issue With Heading Control")
         return turn
- 
+    
+
+  
 def stop_drive():
     """Stop all drive motors."""
-    front_left.stop()
-    front_right.stop()
-    back_left.stop()
-    back_right.stop()
+    front_left.stop(HOLD)
+    front_right.stop(HOLD)
+    back_left.stop(HOLD)
+    back_right.stop(HOLD)
 
 def raw_drive_test():
     f = controller.axis3.position()
@@ -385,10 +377,8 @@ def initialize():
     # while int.is_calibrating:
     # print("calibrating")
     int.set_heading(gpsh)
-    wing.set_position(0, DEGREES)
-    
     wait(1500,MSEC)
-    
+    butt.set_position(0, DEGREES)
     # gpsavg=[]
 #region GPS Functions
 def reset_gps():
@@ -421,7 +411,7 @@ def int_margin(x,y,tx,ty):
     mx=abs(x-tx)
     my=abs(y-ty)
     return math.sqrt(mx**2+my**2)
-def gps_gohead(heading):
+def gps_gohead_old(heading):
     arrived=False
     c1=False
     turn=0
@@ -460,7 +450,41 @@ def gps_gohead(heading):
                 else:turn=-3
             run_drive_motors(0,0,turn)
             wait(5, MSEC)
-    print("arrived")        
+    print("arrived")
+def gps_gohead(heading):
+    if reverseDriveToggle: 
+        heading+=180
+    arrived=False
+    c1=False
+    turn,prev_head_error,total_head_error=0,0,0
+    while not arrived:
+        if gps.quality()<90: continue
+        head=gps.heading()
+        diff=heading-head
+        while diff<-180:diff+=360
+        while diff>180:diff-=360
+        print("diff is" +str(diff)+"and head is"+str(head))
+        if abs(diff)<1:
+            stop_drive()
+            if c1:
+                arrived=True 
+            c1=True
+            continue 
+        else:
+            c1=False 
+            if (diff>0 and diff<180):
+                turn,prev_head_error,total_head_error=PID(0,diff,.6,.0001,0.1,prev_head_error,total_head_error)  
+                turn*=-1 
+                # print("turnR: {}".format(turn))
+                        
+            else:
+                turn,prev_head_error,total_head_error=PID(0,diff,.6,.0001,0.1,prev_head_error,total_head_error)
+                turn*=-1 
+                # print("turnL: {}".format(turn))
+                
+            run_drive_motors(0,0,turn)
+            wait(5, MSEC)
+    print("arrived")                
 def goto_arr():
     global arrived
     while not arrived:
@@ -474,7 +498,7 @@ def gps_goto(x,y):
     goalx=x
     goaly=y
     arrived=False
-    counter=2000
+    counter=3000
     heading_set=False
     prev_gps_error=0
     total_gps_error=0
@@ -489,7 +513,7 @@ def gps_goto(x,y):
             arrived=True
             stop_drive()
             continue
-        if counter%2000==0 and int_margin(xc,yc,x,y)>150:
+        if counter%3000==0 and int_margin(xc,yc,x,y)>150:
             counter=0
             mx=x-xc
             my=y-yc
@@ -515,8 +539,10 @@ def gps_goto(x,y):
         # elif dis>5:f=2              
         # else:f=1
         f,prev_gps_error,total_gps_error=PID(dis,0,.1,.005,.01,prev_gps_error,total_gps_error)
-        if f>50: f=50
-        run_drive_motors(f,0,0)
+        if f>35: f=35
+        # if reverseDriveToggle: 
+        #     f*=-1
+        run_drive_motors(f,0,0,True)
         print("Pos: (",xc,",",yc,"), HEAD: "+str(gps.heading()) +"Counter: "+str(counter)+"f: "+str(f))
         
         # wait(100, MSEC)
@@ -557,40 +583,122 @@ brain.screen.print("Use controller to drive")
 # wait(3000, MSEC)
 
 
-def autonomous():
+# def autonomous0():
+#     initialize()
+#     brain.screen.clear_screen()
+#     brain.screen.print("autonomous code")
+#     #AUTON
+#     tongue_toggle_fn()
+#     butt_toggle_fn()
+#     wait(150,MSEC)
+#     intake_forward_toggle()
+#     timer.clear()
+#     while timer.time(MSEC) < 1500:
+#         run_drive_motors(-80, 0, 0)   # forward
+#         wait(10, MSEC)
+#     stop_drive()
+#     outake_forward_toggle()
+   
 
-    # AUTON
-
+# def autonomous2():
+#     tongue_toggle_fn()
+#     wait(150,MSEC)
+#     intake_forward_toggle()
+#     run_drive_motors(100,0,0)
+#     wait(3000,MSEC)
+#     run_drive_motors(0,0,0)
+#     # wait(1500,MSEC)
+#     intake_forward_toggle()
+#     run_drive_motors(-50,0,0)
+#     butt_toggle_fn()
+#     wait(1500,MSEC)
+#     stop_drive()
+def autonomous_v1():
+    # gps_goto(894,-1241)
+    # gps_gohead(87)
     # tongue_toggle_fn()
-    # while timer.time(MSEC) < 3000:
-    #         intake.spin(REVERSE, 100, PERCENT)
-    #         run_drive_motors(80, 0, 0)   # forward
-    #         wait(10, MSEC)
-
-    # while timer.time(MSEC) < 1000:
-    #             intake.spin(REVERSE, 100, PERCENT)
-    #             run_drive_motors(80, 0, 0)   # forward
-    #             wait(10, MSEC)
-
-    # controller.screen.print("Auton Program Done.")
-
-    # # screo the blue ones, then grab and spit out red
-
-    # for i in range(5):  # repeat 5 times
-    #     # back for 1 second
-    #     timer.clear()
-    #     while timer.time(MSEC) < 1000:
-    #         intake.stop()
-    #         run_drive_motors(-100, 0, 0)   # forward
-    #         wait(10, MSEC)
-
-
-    #     while timer.time(MSEC) < 1000:
-    #         intake.spin(REVERSE, 100, PERCENT)
-    #         run_drive_motors(80, 0, 0)   # forward
-    #         wait(10, MSEC)
-
-    # # makes angles unreliable
+    # gps_goto(1363,-1174)
+    # intake_forward_toggle()
+    # gps_goto(0,406)
+    # gps_gohead(270)
+    # gps_goto(-1162,542)
+    # gps_gohead(0)
+    gps_goto(1162,-1235)
+    gps_gohead(90)
+    intake_forward_toggle()
+    butt_toggle_fn()
+    run_drive_motors(-50,0,0)
+    wait(2000,MSEC)
+    outake_forward_toggle()
+    wait(5000,MSEC)
+    run_drive_motors(50,0,0)
+    outake_forward_toggle()
+    tongue_toggle_fn()
+    wait(3000,MSEC)
+    run_drive_motors(-50,0,0)
+    outake_forward_toggle()
+    wait(5000,MSEC)
+    
+def autonomous_v2():
+    initialize()
+      
+    #goto spot 
+    gps_goto(-1250,-1250)
+    gps_gohead(270)
+    
+    #grab balls
+    print("grab balls")
+    intake_forward_toggle()
+    tongue_toggle_fn()
+    wait(100,MSEC)
+    run_drive_motors(100,0,0)
+    wait(1000,MSEC)
+    print("Stoop moter")
+    run_drive_motors(0,0,0)
+    wait(1000,MSEC)
+    
+    #go to drop spot
+    print("godrop")
+    butt_toggle_fn()
+    print("f1")
+    tongue_toggle_fn()
+    print("f2")
+    rev_drive_toggle_fn()
+    print("greoooo")
+    run_drive_motors(-50,0,0)
+    wait(50,MSEC)
+    gps_goto(-100,-1250)
+    print("grat")   
+    gps_gohead(90)
+    run_drive_motors(-50,0,0)
+    wait(2000,MSEC)
+    
+    #drop balls
+    print("drop")
+    outake_forward_toggle()
+    wait(5000,MSEC)
+    
+    '''run_drive_motors(50,0,0)
+    outake_forward_toggle()
+    tongue_toggle_fn()
+    wait(3000,MSEC)
+    run_drive_motors(-50,0,0)
+    outake_forward_toggle()
+    wait(5000,MSEC)'''
+    
+def autonomou():
+    initialize()
+    print("Driving")
+    intake_forward_toggle()
+    run_drive_motors(60, 0, 0)   # forward
+    wait(3000,MSEC)
+    print("nodrive")
+    stop_drive()
+    wait(2500,MSEC)
+    intake_forward_toggle()
+    
+    
+    #makes angles unreliable
     # for i in range(5):  # repeat 5 times
     #     # rev for x msec
     #     timer.clear()
@@ -609,26 +717,54 @@ def autonomous():
 
     #     stop_drive()
     #     wait(100, MSEC)  # small pause (optional)
-    print("s")
+
+
+    
+
+
+    #Drive forward
+    #grab 3 Balls
+    #drive to goal and drop flap
+    #Hit goal and dispense 3 balls
+    #drive back
+    #grab 3 red. Spit. Grab 3 blue
+    #do it
+    #keep doing it
+
+
 
 def user_control():
+    # COMMENT OUT FOR THE ACTUAL
+    
     global strafeToggle
-    xc=gps.x_position()
-    yc=gps.y_position()
     while True:
+        # gps_gohead(90)
+        # wait(500,MSEC)
+        # gps_gohead(190)
+        # wait(500,MSEC)
+        # gps_gohead(180)
+        # wait(500,MSEC)
+    
+        xc=gps.x_position()
+        yc=gps.y_position()
         if controller.buttonY.pressing(): strafeToggle=True
         else:strafeToggle=False
         
-        x_drive_control()
+        x_drive_control(False)
+        
+        #Controller Screen
+        
         controller.screen.clear_screen()
         # x=gps.x_position()
         # y=gps.y_position()
         # head=gps.heading()
         # print(x,y,head)
+        # print(intake.torque(TorqueUnits.NM))
         controller.screen.set_cursor(1, 1)
         controller.screen.print("Score" if reverseDriveToggle else "Gather")
-        # controller.screen.set_cursor(2, 1)
-        # controller.screen.print(head)
+        controller.screen.set_cursor(2, 1)
+        controller.screen.print("Butt Closed" if butt_toggle else "Butt Open")
+
         
         
         # print("heading: "+str(get_gps_avg()))
@@ -636,15 +772,15 @@ def user_control():
         #raw_drive_test()
         # initialize()
         # print_gps_status()
+        
         print("Pos: (",xc,",",yc,"), HEAD: "+str(gps.heading()))
-        # print(strafeToggle)
         wait(100, MSEC)  # Small delay to prevent CPU overload
-    #endregion
-
+#endregion
 
 # create competition instance
-comp = Competition(user_control, autonomous)
+comp = Competition(user_control, autonomous_v2)
 
 # actions to do when the program starts
 brain.screen.clear_screen()
 # user_control()
+# autonomous()
