@@ -29,7 +29,7 @@ brain = Brain()
 controller = Controller(PRIMARY)
 import math
 #endregion
-#region ==================== MOTOR & PNEUMATICS CONFIGURATION ====================
+#region  MOTOR & PNEUMATICS CONFIGURATION 
 # Configure your motor ports here
 FRONT_LEFT_PORT = Ports.PORT10
 FRONT_RIGHT_PORT = Ports.PORT20
@@ -53,13 +53,13 @@ BUTT_REVERSE=False
 
 strafeToggle=False
 #endregion
-#region ==================== SENSOR CONFIGURATION ====================
+#region  SENSOR CONFIG
 AI_PORT=Ports.PORT13
 D_PORT=Ports.PORT15
 GPS_PORT=Ports.PORT9
 INT_PORT=Ports.PORT21
 #endregion
-#region ==================== DRIVE MOTOR INITIALIZATION ====================
+#region  DRIVE INIT
 # Initialize motors with configured ports and reverse settings
 front_left = Motor(FRONT_LEFT_PORT, GearSetting.RATIO_18_1, FRONT_LEFT_REVERSE)
 front_right = Motor(FRONT_RIGHT_PORT, GearSetting.RATIO_18_1, FRONT_RIGHT_REVERSE)
@@ -67,7 +67,7 @@ back_left = Motor(BACK_LEFT_PORT, GearSetting.RATIO_18_1, BACK_LEFT_REVERSE)
 back_right = Motor(BACK_RIGHT_PORT, GearSetting.RATIO_18_1, BACK_RIGHT_REVERSE)
 gps=Gps(GPS_PORT,0,0)
 #endregion
-#region ==================== INTAKE FUNCTIONS ====================
+#region  INTAKE FUNCS
 intake1  = Motor(INTAKE_PORT1, GearSetting.RATIO_18_1, INTAKE_REVERSE)
 intake2  = Motor(INTAKE_PORT2, GearSetting.RATIO_18_1, not INTAKE_REVERSE)
 intake=MotorGroup(intake1,intake2)
@@ -189,7 +189,7 @@ controller.buttonDown.pressed(rev_drive_toggle_fn)
 
 #endregion'
 
-#region ==================== SENSOR INITIALIZATION ====================
+#region  SENSOR INIT
 
 # AI Classification Competition Element IDs - Push Back
 class GameElementsPushBack:
@@ -211,7 +211,7 @@ timer = Timer()
 
 #endregion
 
-#region ==================== DRIVETRAIN FUNCTIONS ====================
+#region DRIVETRAIN FUNCS
 goal_head=999
 last_head=999
 getH=False
@@ -323,7 +323,8 @@ def raw_drive_test():
     back_left.spin(FORWARD, f, PERCENT)
     back_right.spin(FORWARD, f, PERCENT)
 #endregion
-#region ==================== SENSOR FUNCTIONS ====================
+
+#region SENSOR FUNCS
 
 def PID(desired_state,current_state,Kp,Ki,Kd,prev_error,total_error):
     #Blank PID Function, so we can use it everywhere
@@ -402,7 +403,7 @@ def gps_funcs():
         qual="Awful"
     print("Pos: (",xc,",",yc,") Heading: ",head,"Quality: ",qual)
 def bool_margin(x,y,tx,ty):
-    error=30
+    error=25
     mx=abs(x-tx)
     my=abs(y-ty)
     if mx>error or my>error: return False
@@ -551,7 +552,7 @@ def gps_goto(x,y):
 
 #other funcs here
 #endregion 
-#region ==================== MAIN PROGRAM ====================
+#region  MAIN PROGRAM 
 initialize()
 
 brain.screen.print("X-Drive Ready")
@@ -582,7 +583,7 @@ brain.screen.print("Use controller to drive")
 # gps_goto(365,440)
 # wait(3000, MSEC)
 
-
+#region Auton
 # def autonomous0():
 #     initialize()
 #     brain.screen.clear_screen()
@@ -643,7 +644,7 @@ def autonomous_v2():
     initialize()
       
     #goto spot 
-    gps_goto(-1250,-1250)
+    gps_goto(-1200,-1200)
     gps_gohead(270)
     
     #grab balls
@@ -652,25 +653,25 @@ def autonomous_v2():
     tongue_toggle_fn()
     wait(100,MSEC)
     run_drive_motors(100,0,0)
-    wait(1000,MSEC)
+    wait(1100,MSEC)
     print("Stoop moter")
     run_drive_motors(0,0,0)
-    wait(1000,MSEC)
+    # wait(500,MSEC)
     
     #go to drop spot
     print("godrop")
     butt_toggle_fn()
     print("f1")
-    tongue_toggle_fn()
-    print("f2")
     rev_drive_toggle_fn()
     print("greoooo")
-    run_drive_motors(-50,0,0)
-    wait(50,MSEC)
-    gps_goto(-100,-1250)
+    run_drive_motors(50,-50,0)
+    wait(500,MSEC)
+    print("f2")
+    # gps_goto(-1000,-1250)
+    tongue_toggle_fn()
     print("grat")   
-    gps_gohead(90)
-    run_drive_motors(-50,0,0)
+    # gps_gohead(90)
+    run_drive_motors(50,0,0)
     wait(2000,MSEC)
     
     #drop balls
@@ -730,7 +731,7 @@ def autonomou():
     #grab 3 red. Spit. Grab 3 blue
     #do it
     #keep doing it
-
+#endregion
 
 
 def user_control():
