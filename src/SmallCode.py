@@ -60,7 +60,6 @@ front_left = Motor(FRONT_LEFT_PORT, GearSetting.RATIO_18_1, FRONT_LEFT_REVERSE)
 front_right = Motor(FRONT_RIGHT_PORT, GearSetting.RATIO_18_1, FRONT_RIGHT_REVERSE)
 back_left = Motor(BACK_LEFT_PORT, GearSetting.RATIO_18_1, BACK_LEFT_REVERSE)
 back_right = Motor(BACK_RIGHT_PORT, GearSetting.RATIO_18_1, BACK_RIGHT_REVERSE)
-gps=Gps(GPS_PORT,0,0)
 #endregion
 #region ==================== INTAKE FUNCTIONS ====================
 intake  = Motor(INTAKE_PORT, GearSetting.RATIO_18_1, INTAKE_REVERSE)
@@ -219,7 +218,8 @@ ai__BRED = Colordesc(2, 231, 42, 92, 10, 0.2)
 # front_left = Motor(FRONT_LEFT_PORT, GearSetting.RATIO_18_1, FRONT_LEFT_REVERSE)
 
 distance = Distance(D_PORT)
-gps=Gps(GPS_PORT,0,0)# set to be the offset from the center of robot
+gps=Gps(GPS_PORT)# set to be the offset from the center of robot
+gps.set_origin(0,100,MM)
 ai = AiVision(AI_PORT, ai__BBLUE, ai__BRED, AiVision.ALL_AIOBJS)
 int=Inertial(INT_PORT)
 timer = Timer()
@@ -426,42 +426,40 @@ def int_margin(x,y,tx,ty):
     my=abs(y-ty)
     return math.sqrt(mx**2+my**2)
 def gps_gohead(heading):
+    Kp=1.1
+    Ki=.0001
+    Kd=.1
+    if reverseDriveToggle: 
+        heading+=180
     arrived=False
     c1=False
-    turn=0
+    turn,prev_head_error,total_head_error=0,0,0
     while not arrived:
         if gps.quality()<90: continue
         head=gps.heading()
         diff=heading-head
-        if diff<-180:diff+=360
-        elif diff>180:diff-=360
+        while diff<-180:diff+=360
+        while diff>180:diff-=360
         print("diff is" +str(diff)+"and head is"+str(head))
-        if abs(diff)<1:
+        if abs(diff)<1.7:
             stop_drive()
             if c1:
-                arrived=True 
+                arrived=True
+                wait(50,MSEC) 
             c1=True
             continue 
         else:
             c1=False 
             if (diff>0 and diff<180):
-                 if diff>150:turn=50               
-                 elif diff>120:turn=40               
-                 elif diff>90:turn=20               
-                 elif diff>60:turn=20               
-                 elif diff>30:turn=10               
-                 elif diff>15:turn=5               
-                 elif diff>5:turn=5               
-                 else:turn=3             
+                turn,prev_head_error,total_head_error=PID(0,diff,Kp,Ki,Kd,prev_head_error,total_head_error)  
+                turn*=-1 
+                # print("turnR: {}".format(turn))
+                        
             else:
-                if diff<-150:turn=-50               
-                elif diff<-120:turn=-40               
-                elif diff<-90:turn=-20               
-                elif diff<-60:turn=-20               
-                elif diff<-30:turn=-10               
-                elif diff<-15:turn=-5               
-                elif diff<-5:turn=-5               
-                else:turn=-3
+                turn,prev_head_error,total_head_error=PID(0,diff,Kp,Ki,Kd,prev_head_error,total_head_error)
+                turn*=-1 
+                # print("turnL: {}".format(turn))
+                
             run_drive_motors(0,0,turn)
             wait(5, MSEC)
     print("arrived")        
@@ -478,7 +476,7 @@ def gps_goto(x,y):
     goalx=x
     goaly=y
     arrived=False
-    counter=2000
+    counter=3000
     heading_set=False
     prev_gps_error=0
     total_gps_error=0
@@ -493,7 +491,7 @@ def gps_goto(x,y):
             arrived=True
             stop_drive()
             continue
-        if counter%2000==0 and int_margin(xc,yc,x,y)>150:
+        if counter%3000==0 and int_margin(xc,yc,x,y)>120:
             counter=0
             mx=x-xc
             my=y-yc
@@ -518,9 +516,9 @@ def gps_goto(x,y):
         # elif dis>15:f=3               
         # elif dis>5:f=2              
         # else:f=1
-        f,prev_gps_error,total_gps_error=PID(dis,0,.1,.005,.01,prev_gps_error,total_gps_error)
-        if f>50: f=50
-        run_drive_motors(f,0,0)
+        f,prev_gps_error,total_gps_error=PID(dis,0,.12,.0005,.08,prev_gps_error,total_gps_error)
+        if f>40: f=40
+        run_drive_motors(f,0,0,True)
         print("Pos: (",xc,",",yc,"), HEAD: "+str(gps.heading()) +"Counter: "+str(counter)+"f: "+str(f))
         
         # wait(100, MSEC)
@@ -562,6 +560,8 @@ brain.screen.print("Use controller to drive")
 
 
 def autonomous():
+    
+    
 
     # AUTON
 
@@ -615,11 +615,68 @@ def autonomous():
     #     wait(100, MSEC)  # small pause (optional)
     print("s")
 
+def autonomous_v2():
+    initialize()
+      
+    #goto spot 
+    gps_goto(-1235,1200)
+    gps_gohead(270)
+    
+    #grab balls
+    print("grab balls")
+    intake_forward_toggle()
+    tongue_toggle_fn()
+    wait(100,MSEC)
+    run_drive_motors(60,0,0)
+    wait(1000,MSEC)
+    print("Stoop moter")
+    run_drive_motors(0,0,0)
+    wait(1000,MSEC)
+    
+    #go to drop spot
+    print("godrop")
+    rev_drive_toggle_fn()
+    print("greoooo")
+    run_drive_motors(50,0,0)
+    wait(50,MSEC)
+    print("f2")
+    # gps_goto(-1200,1200)
+    # run_drive_motors(50,0,0)
+
+    tongue_toggle_fn()
+    print("grat") 
+    gps_goto(-520,390)
+    print("breep")  
+    gps_gohead(135)
+    run_drive_motors(50,0,0)
+    wait(2000,MSEC)
+    
+    #drop balls
+    print("drop")
+    outake_forward_toggle()
+    wait(5000,MSEC)
+
+
 def user_control():
     global strafeToggle
-    xc=gps.x_position()
-    yc=gps.y_position()
+    # gps_gohead(0)
+    # wait(1000, MSEC)
+    # gps_gohead(90)
+    # wait(1000, MSEC)
+    # gps_gohead(240)
+    # wait(1000, MSEC)
+    # gps_gohead(265)
+    # wait(1000, MSEC)
+    # gps_gohead(255)
+    # wait(1000, MSEC)
+    # gps_gohead(250)
+    # wait(1000, MSEC)
+    # gps_gohead(252)
+    # wait(1000, MSEC)
+    # gps_gohead(0)
     while True:
+        xc=gps.x_position()
+        yc=gps.y_position()
         if controller.buttonY.pressing(): strafeToggle=True
         else:strafeToggle=False
         
@@ -647,7 +704,7 @@ def user_control():
 
 
 # create competition instance
-comp = Competition(user_control, autonomous)
+comp = Competition(user_control, autonomous_v2)
 
 # actions to do when the program starts
 brain.screen.clear_screen()

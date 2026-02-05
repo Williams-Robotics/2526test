@@ -245,6 +245,8 @@ def run_drive_motors(forward,strafe,turn, ignore=False):
         forward*=-1
         strafe*=-1
     if not ignore: turn=newgps_heading_control(turn)
+    
+    # if not ignore: turn = gps_drive_assist(forward, strafe, turn)
        
     # Calculate motor speeds for X-drive kinematics
     # X-drive formula accounts for diagonal motor placement
@@ -322,6 +324,51 @@ def raw_drive_test():
     front_right.spin(FORWARD, f, PERCENT)
     back_left.spin(FORWARD, f, PERCENT)
     back_right.spin(FORWARD, f, PERCENT)
+hold_heading = None
+prev_error = 0
+
+def wrap_angle(a):
+    if a > 180: a -= 360
+    if a < -180: a += 360
+    return a
+
+
+def gps_drive_assist(forward, strafe, driver_turn):
+    global hold_heading, prev_error
+
+    #off when turning
+    if abs(driver_turn) > 5:
+        hold_heading = None
+        prev_error = 0
+        return driver_turn
+
+    # off when still
+    if abs(forward) < 15:
+        hold_heading = None
+        prev_error = 0
+        return driver_turn
+
+    if gps.quality() < 90:
+        return driver_turn
+
+    # startiing heading
+    if hold_heading is None:
+        hold_heading = gps.heading()
+        return driver_turn
+
+    # calculate heading error
+    error = wrap_angle(hold_heading - gps.heading())
+
+    Kp = 1.1
+    Kd = 0.25
+
+    correction = Kp * error + Kd * (error - prev_error)
+    prev_error = error
+
+    # Limit correction so it doesn't feel "grabby"
+    correction = max(-20, min(20, correction))
+
+    return driver_turn + correction
 #endregion
 
 #region SENSOR FUNCS
@@ -653,10 +700,10 @@ def autonomous_v2():
     tongue_toggle_fn()
     wait(100,MSEC)
     run_drive_motors(100,0,0)
-    wait(1100,MSEC)
+    wait(1000,MSEC)
     print("Stoop moter")
     run_drive_motors(0,0,0)
-    # wait(500,MSEC)
+    wait(300,MSEC)
     
     #go to drop spot
     print("godrop")
