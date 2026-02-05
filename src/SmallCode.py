@@ -516,7 +516,7 @@ def gps_goto(x,y):
         # elif dis>15:f=3               
         # elif dis>5:f=2              
         # else:f=1
-        f,prev_gps_error,total_gps_error=PID(dis,0,.12,.0005,.08,prev_gps_error,total_gps_error)
+        f,prev_gps_error,total_gps_error=PID(dis,0,.1,.0003,.08,prev_gps_error,total_gps_error)
         if f>40: f=40
         run_drive_motors(f,0,0,True)
         print("Pos: (",xc,",",yc,"), HEAD: "+str(gps.heading()) +"Counter: "+str(counter)+"f: "+str(f))
@@ -656,7 +656,10 @@ def autonomous_v2():
     outake_forward_toggle()
     wait(5000,MSEC)
 
-
+def autonomous_v3():
+    initialize()
+    gps_goto(-734,702)
+    gps_gohead(305)
 def user_control():
     global strafeToggle
     # gps_gohead(0)
@@ -704,8 +707,9 @@ def user_control():
 
 
 # create competition instance
-comp = Competition(user_control, autonomous_v2)
+comp = Competition(user_control, autonomous_v3)
 
 # actions to do when the program starts
 brain.screen.clear_screen()
-# user_control()
+#user_control()
+autonomous_v3()
