@@ -135,12 +135,14 @@ def tongue_toggle_fn():
 def wing_toggle_fn():
     global wing_toggle
     wing_toggle = not wing_toggle
-
+    if (wing.position())==(0.0):wing.spin_to_position(-173.0)
     if wing_toggle:
-        wing.spin_for(REVERSE, 280, MSEC, 80, PERCENT)
+        wing.spin_to_position(-109.4)
+        # wing.spin_for(REVERSE, 280, MSEC, 80, PERCENT)
         print("wing up")
     else:
-        wing.spin_for(FORWARD, 240, MSEC, 80, PERCENT)
+        wing.spin_to_position(-173.0)
+        # wing.spin_for(FORWARD, 240, MSEC, 80, PERCENT)
         print("wing down")
     
     # global med_state
@@ -469,7 +471,7 @@ def goto_arr():
         if bool_margin(gps.x_position(),gps.y_position(),goalx,goaly):
             arrived=True
             stop_drive()
-def gps_goto(x,y):
+def gps_goto(x,y,max_speed=40):
     global arrived
     global goalx
     global goaly
@@ -517,7 +519,7 @@ def gps_goto(x,y):
         # elif dis>5:f=2              
         # else:f=1
         f,prev_gps_error,total_gps_error=PID(dis,0,.1,.0003,.08,prev_gps_error,total_gps_error)
-        if f>40: f=40
+        if f>max_speed: f=max_speed
         run_drive_motors(f,0,0,True)
         print("Pos: (",xc,",",yc,"), HEAD: "+str(gps.heading()) +"Counter: "+str(counter)+"f: "+str(f))
         
@@ -533,31 +535,6 @@ initialize()
 brain.screen.print("X-Drive Ready")
 brain.screen.new_line()
 brain.screen.print("Use controller to drive")
-
-# GPS TESTING
-# gps_goto(-800,-100)
-# wait(1000, MSEC)
-# gps_goto(-500,500)
-# wait(1000, MSEC)
-# gps_goto(500,500)
-# gps_gohead(0)
-# wait(1000, MSEC)
-
-
-# gps_gohead(0)
-# wait(3000, MSEC)
-# gps_gohead(120)
-# wait(3000, MSEC)
-# gps_gohead(240)
-# wait(3000, MSEC)
-# gps_gohead(0)
-# wait(3000, MSEC)
-# gps_gohead(0)
-
-#Main control loop
-# gps_goto(365,440)
-# wait(3000, MSEC)
-
 
 def autonomous():
     
@@ -656,10 +633,76 @@ def autonomous_v2():
     outake_forward_toggle()
     wait(5000,MSEC)
 
-def autonomous_v3():
+def autonomous_v3_blue():
     initialize()
-    gps_goto(-734,702)
-    gps_gohead(305)
+    
+    #goto goal
+    rev_drive_toggle_fn()
+    gps_goto(-501,440)
+    gps_gohead(135)
+    run_drive_motors(15,0,0,True)
+    wait(1500,MSEC)
+    
+    #score
+    outake_forward_toggle()
+    wait(4000,MSEC)
+    outake_forward_toggle()
+    
+    #goto spot 
+    rev_drive_toggle_fn()
+    run_drive_motors(25,0,0,True)
+    wait(4500,MSEC)
+    
+    gps_goto(-1240,1230,25)
+    gps_gohead(270)
+    
+    #grab balls
+    print("grab balls")
+    intake_forward_toggle()
+    tongue_toggle_fn()
+    wait(100,MSEC)
+    run_drive_motors(25,0,0)
+    wait(3000,MSEC)
+    print("Stoop moter")
+    run_drive_motors(0,0,0)
+    wait(1000,MSEC)
+    stop_drive()
+    wait(2000,MSEC)
+def autonomous_v3_red():
+    initialize()
+    
+    #goto goal
+    rev_drive_toggle_fn()
+    gps_goto(501,-440)
+    gps_gohead(135)
+    run_drive_motors(15,0,0,True)
+    wait(1500,MSEC)
+    
+    #score
+    outake_forward_toggle()
+    wait(4000,MSEC)
+    outake_forward_toggle()
+    
+    #goto spot 
+    rev_drive_toggle_fn()
+    run_drive_motors(25,0,0,True)
+    wait(4500,MSEC)
+    
+    gps_goto(1240,-1230,20)
+    gps_gohead(270)
+    
+    #grab balls
+    print("grab balls")
+    intake_forward_toggle()
+    tongue_toggle_fn()
+    wait(100,MSEC)
+    run_drive_motors(25,0,0)
+    wait(3000,MSEC)
+    print("Stoop moter")
+    run_drive_motors(0,0,0)
+    wait(1000,MSEC)
+    stop_drive()
+    wait(2000,MSEC)   
 def user_control():
     global strafeToggle
     # gps_gohead(0)
@@ -707,9 +750,9 @@ def user_control():
 
 
 # create competition instance
-comp = Competition(user_control, autonomous_v3)
+comp = Competition(user_control, autonomous_v3_blue)
 
 # actions to do when the program starts
 brain.screen.clear_screen()
 #user_control()
-autonomous_v3()
+# autonomous_v3()
