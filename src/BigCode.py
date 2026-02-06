@@ -182,7 +182,7 @@ butt_toggle=True
 controller.buttonX.pressed(butt_toggle_fn)
 
 reverseDriveToggle=False
-controller.buttonDown.pressed(rev_drive_toggle_fn)
+controller.buttonUp.pressed(rev_drive_toggle_fn)
 
 
 
@@ -687,61 +687,111 @@ def autonomous_v1():
     outake_forward_toggle()
     wait(5000,MSEC)
     
-def autonomous_v2():
+def autonomous_v2_blue():
     initialize()
-      
-    #goto spot 
-    gps_goto(-1220,-1200)
-    gps_gohead(270)
-    
-    #grab balls
-    print("grab balls")
-    intake_forward_toggle()
-    tongue_toggle_fn()
-    wait(100,MSEC)
-    run_drive_motors(25,0,0)
-    wait(800,MSEC)
-    run_drive_motors(100,0,0)
-    wait(2200,MSEC)
-    print("Stoop moter")
-    tongue_toggle_fn()
-    wait(50,MSEC)
-    tongue_toggle_fn()
-    run_drive_motors(0,0,0)
-    wait(1200,MSEC)
-    intake_forward_toggle()
+    while True: 
+        # goto spot 
+        gps_goto(-1220,-1200)
+        gps_gohead(270)
+        
+        #grab balls
+        print("grab balls")
+        intake_forward_toggle()
+        tongue_toggle_fn()
+        wait(100,MSEC)
+        run_drive_motors(25,0,0)
+        wait(800,MSEC)
+        run_drive_motors(100,0,0)
+        wait(2200,MSEC)
+        print("Stoop moter")
+        tongue_toggle_fn()
+        wait(50,MSEC)
+        tongue_toggle_fn()
+        run_drive_motors(0,0,0)
+        wait(1200,MSEC)
+        intake_forward_toggle()
 
+        
+        #go to drop spot
+        print("godrop")
+        # butt_toggle_fn()
+        print("f1")
+        rev_drive_toggle_fn()
+        print("greoooo")
+        run_drive_motors(50,0,0)
+        wait(500,MSEC)
+        print("f2")
+        # gps_goto(-1000,-1250)
+        tongue_toggle_fn()
+        print("grat")   
+        # gps_gohead(90)
+        run_drive_motors(50,0,0)
+        wait(2000,MSEC)
+        
+        #drop balls
+        print("drop")
+        intake_forward_toggle()
+        outake_forward_toggle()
+        wait(3500,MSEC)
+        intake_forward_toggle()
+        outake_forward_toggle()
+        rev_drive_toggle_fn()
+        
+
+def autonomous_v2_red():
+    initialize()
+    while True: 
+        #goto spot 
+        gps_goto(1220,1200)
+        gps_gohead(90)
+        
+        #grab balls
+        print("grab balls")
+        intake_forward_toggle()
+        tongue_toggle_fn()
+        wait(100,MSEC)
+        run_drive_motors(25,0,0)
+        wait(800,MSEC)
+        run_drive_motors(100,0,0)
+        wait(2200,MSEC)
+        print("Stoop moter")
+        tongue_toggle_fn()
+        wait(50,MSEC)
+        tongue_toggle_fn()
+        run_drive_motors(0,0,0)
+        wait(1200,MSEC)
+        intake_forward_toggle()
+
+        
+        #go to drop spot
+        print("godrop")
+        # butt_toggle_fn()
+        print("f1")
+        rev_drive_toggle_fn()
+        print("greoooo")
+        run_drive_motors(50,0,0)
+        wait(500,MSEC)
+        print("f2")
+        # gps_goto(-1000,-1250)
+        tongue_toggle_fn()
+        print("grat")   
+        # gps_gohead(90)
+        run_drive_motors(50,0,0)
+        wait(2000,MSEC)
+        
+        #drop balls
+        print("drop")
+        intake_forward_toggle()
+        outake_forward_toggle()
+        wait(3500,MSEC)
+        intake_forward_toggle()
+        outake_forward_toggle()
+        
+        rev_drive_toggle_fn()
     
-    #go to drop spot
-    print("godrop")
-    # butt_toggle_fn()
-    print("f1")
-    rev_drive_toggle_fn()
-    print("greoooo")
-    run_drive_motors(50,0,0)
-    wait(500,MSEC)
-    print("f2")
-    # gps_goto(-1000,-1250)
-    tongue_toggle_fn()
-    print("grat")   
-    # gps_gohead(90)
-    run_drive_motors(50,0,0)
-    wait(2000,MSEC)
-    
-    #drop balls
-    print("drop")
-    intake_forward_toggle()
-    outake_forward_toggle()
-    wait(5000,MSEC)
-    
-    '''run_drive_motors(50,0,0)
-    outake_forward_toggle()
-    tongue_toggle_fn()
-    wait(3000,MSEC)
-    run_drive_motors(-50,0,0)
-    outake_forward_toggle()
-    wait(5000,MSEC)'''
-    
+
+   
+   
 def autonomou():
     initialize()
     print("Driving")
@@ -834,7 +884,7 @@ def user_control():
 #endregion
 
 # create competition instance
-comp = Competition(user_control, autonomous_v2)
+comp = Competition(user_control, autonomous_v2_red)
 
 # actions to do when the program starts
 brain.screen.clear_screen()
