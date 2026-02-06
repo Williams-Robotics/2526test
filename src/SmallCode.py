@@ -673,8 +673,8 @@ def autonomous_v3_red():
     
     #goto goal
     rev_drive_toggle_fn()
-    gps_goto(501,-440)
-    gps_gohead(135)
+    gps_goto(525,-440)
+    gps_gohead(315)
     run_drive_motors(15,0,0,True)
     wait(1500,MSEC)
     
@@ -688,8 +688,9 @@ def autonomous_v3_red():
     run_drive_motors(25,0,0,True)
     wait(4500,MSEC)
     
-    gps_goto(1240,-1230,20)
-    gps_gohead(270)
+    gps_goto(1394,-1149,20)
+    # gps_goto(1240,-1230,20)
+    gps_gohead(90)
     
     #grab balls
     print("grab balls")
@@ -750,7 +751,7 @@ def user_control():
 
 
 # create competition instance
-comp = Competition(user_control, autonomous_v3_blue)
+comp = Competition(user_control, autonomous_v3_red)
 
 # actions to do when the program starts
 brain.screen.clear_screen()

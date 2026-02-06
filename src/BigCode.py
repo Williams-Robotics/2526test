@@ -150,7 +150,7 @@ def butt_toggle_fn():
     global butt_toggle
     butt_toggle = not butt_toggle
     if butt_toggle:butt.spin_to_position(0,DEGREES)
-    else:butt.spin_to_position(-180,DEGREES)
+    else:butt.spin_to_position(180,DEGREES)
     
 def rev_drive_toggle_fn():
     global reverseDriveToggle
@@ -691,7 +691,7 @@ def autonomous_v2():
     initialize()
       
     #goto spot 
-    gps_goto(-1200,-1200)
+    gps_goto(-1220,-1200)
     gps_gohead(270)
     
     #grab balls
@@ -699,19 +699,26 @@ def autonomous_v2():
     intake_forward_toggle()
     tongue_toggle_fn()
     wait(100,MSEC)
+    run_drive_motors(25,0,0)
+    wait(800,MSEC)
     run_drive_motors(100,0,0)
-    wait(1000,MSEC)
+    wait(2200,MSEC)
     print("Stoop moter")
+    tongue_toggle_fn()
+    wait(50,MSEC)
+    tongue_toggle_fn()
     run_drive_motors(0,0,0)
-    wait(300,MSEC)
+    wait(1200,MSEC)
+    intake_forward_toggle()
+
     
     #go to drop spot
     print("godrop")
-    butt_toggle_fn()
+    # butt_toggle_fn()
     print("f1")
     rev_drive_toggle_fn()
     print("greoooo")
-    run_drive_motors(50,-50,0)
+    run_drive_motors(50,0,0)
     wait(500,MSEC)
     print("f2")
     # gps_goto(-1000,-1250)
@@ -723,6 +730,7 @@ def autonomous_v2():
     
     #drop balls
     print("drop")
+    intake_forward_toggle()
     outake_forward_toggle()
     wait(5000,MSEC)
     
@@ -811,7 +819,7 @@ def user_control():
         controller.screen.set_cursor(1, 1)
         controller.screen.print("Score" if reverseDriveToggle else "Gather")
         controller.screen.set_cursor(2, 1)
-        controller.screen.print("Butt Closed" if butt_toggle else "Butt Open")
+        controller.screen.print("Butt Closed" if not butt_toggle else "Butt Open")
 
         
         

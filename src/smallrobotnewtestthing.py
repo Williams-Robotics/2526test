@@ -351,10 +351,10 @@ def gps_heading_control(turn):
   
 def stop_drive():
     """Stop all drive motors."""
-    front_left.stop()
-    front_right.stop()
-    back_left.stop()
-    back_right.stop()
+    front_left.stop(HOLD)
+    front_right.stop(HOLD)
+    back_left.stop(HOLD)
+    back_right.stop(HOLD)
 
 def raw_drive_test():
     f = controller.axis3.position()
