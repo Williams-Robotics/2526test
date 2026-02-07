@@ -136,7 +136,7 @@ def tongue_toggle_fn():
 def wing_toggle_fn():
     global wing_toggle
     wing_toggle = not wing_toggle
-    if wing_toggle:wing.spin_to_position(-90, DEGREES)
+    if wing_toggle:wing.spin_to_position(-120, DEGREES)
     else:wing.spin_to_position(0, DEGREES)
     
 def rev_drive_toggle_fn():
