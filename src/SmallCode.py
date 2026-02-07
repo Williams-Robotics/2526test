@@ -99,7 +99,7 @@ def intake_reverse_toggle():
         intake.stop(HOLD)
         intake.spin(REVERSE, 60, PERCENT)
     
-def outake_forward_toggle():
+def outake_forward_toggle(speed=65):
     global outake_forward, outake_reverse
 
     if outake_forward:
@@ -110,7 +110,7 @@ def outake_forward_toggle():
             outake_reverse = False
             outake_forward=True
             outake.stop(HOLD)
-            outake.spin(FORWARD, 65, PERCENT)
+            outake.spin(FORWARD, speed, PERCENT)
 
 def outake_reverse_toggle():
     global outake_reverse, outake_forward
@@ -644,9 +644,9 @@ def autonomous_v3_red():
     wait(1500,MSEC)
     
     #score
-    outake_forward_toggle()
+    outake_forward_toggle(40)
     wait(4000,MSEC)
-    outake_forward_toggle()
+    outake_forward_toggle(40)
     
     #goto spot 
     rev_drive_toggle_fn()
@@ -679,9 +679,9 @@ def autonomous_v3_blue():
     wait(1500,MSEC)
     
     #score
-    outake_forward_toggle()
+    outake_forward_toggle(40)
     wait(4000,MSEC)
-    outake_forward_toggle()
+    outake_forward_toggle(40)
     
     #goto spot 
     rev_drive_toggle_fn()

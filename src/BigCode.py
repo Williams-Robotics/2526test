@@ -884,7 +884,7 @@ def user_control():
 #endregion
 
 # create competition instance
-comp = Competition(user_control, autonomous_v2_red)
+comp = Competition(user_control, autonomous_v2_blue)
 
 # actions to do when the program starts
 brain.screen.clear_screen()
