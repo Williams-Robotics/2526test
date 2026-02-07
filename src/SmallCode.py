@@ -633,7 +633,7 @@ def autonomous_v2():
     outake_forward_toggle()
     wait(5000,MSEC)
 
-def autonomous_v3_blue():
+def autonomous_v3_red():
     initialize()
     
     #goto goal
@@ -668,7 +668,7 @@ def autonomous_v3_blue():
     wait(1000,MSEC)
     stop_drive()
     wait(2000,MSEC)
-def autonomous_v3_red():
+def autonomous_v3_blue():
     initialize()
     
     #goto goal

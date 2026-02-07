@@ -687,7 +687,7 @@ def autonomous_v1():
     outake_forward_toggle()
     wait(5000,MSEC)
     
-def autonomous_v2_blue():
+def autonomous_v2_red():
     initialize()
     while True: 
         # goto spot 
@@ -738,7 +738,7 @@ def autonomous_v2_blue():
         rev_drive_toggle_fn()
         
 
-def autonomous_v2_red():
+def autonomous_v2_blue():
     initialize()
     while True: 
         #goto spot 
