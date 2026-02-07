@@ -644,9 +644,9 @@ def autonomous_v3_red():
     wait(1500,MSEC)
     
     #score
-    outake_forward_toggle(40)
+    outake_forward_toggle(60)
     wait(4000,MSEC)
-    outake_forward_toggle(40)
+    outake_forward_toggle(60)
     
     #goto spot 
     rev_drive_toggle_fn()
@@ -679,9 +679,9 @@ def autonomous_v3_blue():
     wait(1500,MSEC)
     
     #score
-    outake_forward_toggle(40)
+    outake_forward_toggle(60)
     wait(4000,MSEC)
-    outake_forward_toggle(40)
+    outake_forward_toggle(60)
     
     #goto spot 
     rev_drive_toggle_fn()
@@ -703,7 +703,14 @@ def autonomous_v3_blue():
     run_drive_motors(0,0,0)
     wait(1000,MSEC)
     stop_drive()
-    wait(2000,MSEC)   
+    wait(2000,MSEC)  
+# def thing_testt():
+#     #score
+#     run_drive_motors(15,0,0,True)
+#     wait(1500,MSEC)
+#     outake_forward_toggle(60)
+#     wait(4000,MSEC)
+#     outake_forward_toggle(60) 
 def user_control():
     global strafeToggle
     # gps_gohead(0)
@@ -757,3 +764,4 @@ comp = Competition(user_control, autonomous_v3_blue)
 brain.screen.clear_screen()
 #user_control()
 # autonomous_v3()
+# thing_testt()
