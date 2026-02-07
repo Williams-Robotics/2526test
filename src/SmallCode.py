@@ -97,7 +97,7 @@ def intake_reverse_toggle():
         intake_forward = False
         intake_reverse = True
         intake.stop(HOLD)
-        intake.spin(REVERSE, 100, PERCENT)
+        intake.spin(REVERSE, 60, PERCENT)
     
 def outake_forward_toggle():
     global outake_forward, outake_reverse
@@ -137,7 +137,7 @@ def wing_toggle_fn():
     wing_toggle = not wing_toggle
     if (wing.position())==(0.0):wing.spin_to_position(-173.0)
     if wing_toggle:
-        wing.spin_to_position(-109.4)
+        wing.spin_to_position(-125.4)
         # wing.spin_for(REVERSE, 280, MSEC, 80, PERCENT)
         print("wing up")
     else:
@@ -751,7 +751,7 @@ def user_control():
 
 
 # create competition instance
-comp = Competition(user_control, autonomous_v3_red)
+comp = Competition(user_control, autonomous_v3_blue)
 
 # actions to do when the program starts
 brain.screen.clear_screen()
