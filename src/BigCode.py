@@ -743,7 +743,7 @@ def autonomous_v2_blue():
     while True: 
         #goto spot 
         gps_goto(1220,1200)
-        gps_gohead(90)
+        gps_gohead(102)
         
         #grab balls
         print("grab balls")
